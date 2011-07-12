@@ -1,0 +1,14 @@
+#==============================================================================
+#
+# Abs:  IOC Administration Records
+#
+# Name: iocAdmin.substitutions
+#
+#==============================================================================
+#
+file ipimb.template
+{
+	pattern
+	{ RECNAME    , BOX      }
+	{ HFX:DG1:IPM:01 , HFX-DG1-IPM-01 }
+}

@@ -1,0 +1,15 @@
+#==============================================================================
+#
+# Abs:  ipimb Records
+#
+# Name: ioc-xrt-xcsimb1.substitutions
+#
+#==============================================================================
+#
+file ipimb.template
+{
+	pattern
+	{ RECNAME    , BOX      }
+	{ HXX:UM6:IMB:01 , HXX-UM6-IMB-01 }
+	{ HXX:UM6:IMB:02 , HXX-UM6-IMB-02 }
+}

@@ -1,0 +1,19 @@
+#==============================================================================
+#
+# Abs:  ipimb Records
+#
+# Name: ioc-xrt-xcsimb3.substitutions
+#
+#==============================================================================
+#
+file ipimb.template
+{
+	pattern
+	{ RECNAME    , BOX      }
+	{ HFX:DG2:IMB:01 , HFX-DG2-IMB-01 }
+	{ HFX:DG2:IMB:02 , HFX-DG2-IMB-02 }
+	{ XCS:DG3:IPM:03 , XCS-DG3-IMB-03 }
+	{ XCS:DG3:IPM:04 , XCS-DG3-IMB-04 }
+	{ HFX:DG3:IPM:01 , HFX-DG3-IMB-01 }
+	{ HFX:DG3:IPM:02 , HFX-DG3-IMB-02 }
+}

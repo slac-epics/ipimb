@@ -1,0 +1,5 @@
+##include "base.dbd"
+function(ipimbConfigInit)
+function(ipimbConfigProc)
+device(ai, INST_IO, devAiIPIMB, "IPIMB")
+driver("drvIPIMB")

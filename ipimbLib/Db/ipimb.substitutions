@@ -1,0 +1,17 @@
+#
+# ipimb database substitutions file
+#
+
+# Generate ipimb db file 
+#	Macros:
+#		TODO:	List here any macros used in the template
+#				Note which ones have defaults.
+file _ipimb.template
+{
+	{
+		# Hack till msi supports empty substitutions
+		RECNAME		=	HFX:DG1:IPM,
+		BOX		=	HFX:DG1:IPM
+	}
+}
+

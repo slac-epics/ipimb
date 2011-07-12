@@ -1,0 +1,235 @@
+record(ai, "$(RECNAME):CH0") {
+  field(DESC, "Analog Input")
+  field(SCAN, "I/O Intr")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):0:DATA")
+  field(PREC, "4")
+  field(PRIO, "HIGH")
+  field(EGUF, "5")
+  field(EGUL, "0")
+  field(HOPR, "5")
+  field(LOPR, "0")
+#  field(ADEL, "$(ADEL)")
+#  field(MDEL, "$(MDEL)")
+#  field(HIHI, "$(HIHI)")
+#  field(HIGH, "$(HIGH)")
+#  field(LOW,  "$(LOW)")
+#  field(LOLO, "$(LOLO)")
+  field(EGU,  "Volt")
+  field(LINR, "LINEAR")
+#  field(HHSV, "MAJOR")
+#  field(HSV,  "MINOR")
+#  field(LSV,  "MINOR")
+#  field(LLSV, "MAJOR")
+  field(FLNK, "$(RECNAME):CH1")
+}
+
+record(ai, "$(RECNAME):CH1") {
+  field(DESC, "Analog Input")
+#  field(SCAN, "I/O Intr")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):1:DATA")
+  field(PREC, "4")
+  field(PRIO, "HIGH")
+  field(EGUF, "5")
+  field(EGUL, "0")
+  field(HOPR, "5")
+  field(LOPR, "0")
+#  field(ADEL, "$(ADEL)")
+#  field(MDEL, "$(MDEL)")
+#  field(HIHI, "$(HIHI)")
+#  field(HIGH, "$(HIGH)")
+#  field(LOW,  "$(LOW)")
+#  field(LOLO, "$(LOLO)")
+  field(EGU,  "Volt")
+  field(LINR, "LINEAR")
+#  field(HHSV, "MAJOR")
+#  field(HSV,  "MINOR")
+#  field(LSV,  "MINOR")
+#  field(LLSV, "MAJOR")
+  field(FLNK, "$(RECNAME):CH2")
+}
+
+record(ai, "$(RECNAME):CH2") {
+  field(DESC, "Analog Input")
+#  field(SCAN, "I/O Intr")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):2:DATA")
+  field(PREC, "4")
+  field(PRIO, "HIGH")
+  field(EGUF, "5")
+  field(EGUL, "0")
+  field(HOPR, "5")
+  field(LOPR, "0")
+#  field(ADEL, "$(ADEL)")
+#  field(MDEL, "$(MDEL)")
+#  field(HIHI, "$(HIHI)")
+#  field(HIGH, "$(HIGH)")
+#  field(LOW,  "$(LOW)")
+#  field(LOLO, "$(LOLO)")
+  field(EGU,  "Volt")
+  field(LINR, "LINEAR")
+#  field(HHSV, "MAJOR")
+#  field(HSV,  "MINOR")
+#  field(LSV,  "MINOR")
+#  field(LLSV, "MAJOR")
+  field(FLNK, "$(RECNAME):CH3")
+}
+
+record(ai, "$(RECNAME):CH3") {
+  field(DESC, "Analog Input")
+#  field(SCAN, "I/O Intr")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):3:DATA")
+  field(PREC, "4")
+  field(PRIO, "HIGH")
+  field(EGUF, "5")
+  field(EGUL, "0")
+  field(HOPR, "5")
+  field(LOPR, "0")
+#  field(ADEL, "$(ADEL)")
+#  field(MDEL, "$(MDEL)")
+#  field(HIHI, "$(HIHI)")
+#  field(HIGH, "$(HIGH)")
+#  field(LOW,  "$(LOW)")
+#  field(LOLO, "$(LOLO)")
+  field(EGU,  "Volt")
+  field(LINR, "LINEAR")
+#  field(HHSV, "MAJOR")
+#  field(HSV,  "MINOR")
+#  field(LSV,  "MINOR")
+#  field(LLSV, "MAJOR")
+  field(FLNK, "$(RECNAME):SUM")
+}
+
+record(calc,"$(RECNAME):SUM") {
+        field(DESC,"SUM")
+        field(SCAN,"Passive")
+        field(CALC,"(A+B+C+D)")
+        field(INPA,"$(RECNAME):CH0.VAL NPP NMS")
+        field(INPB,"$(RECNAME):CH1.VAL NPP NMS")
+        field(INPC,"$(RECNAME):CH2.VAL NPP NMS")
+        field(INPD,"$(RECNAME):CH3.VAL NPP NMS")
+        field(PREC,"4")
+        field(FLNK, "$(RECNAME):XPOS")
+}
+
+record(calc,"$(RECNAME):XPOS") {
+        field(DESC,"XPOS")
+        field(SCAN,"Passive")
+        field(CALC,"E*(B-D)/(B+D)")
+        field(INPA,"$(RECNAME):CH0.VAL NPP NMS")
+        field(INPB,"$(RECNAME):CH1.VAL NPP NMS")
+        field(INPC,"$(RECNAME):CH2.VAL NPP NMS")
+        field(INPD,"$(RECNAME):CH3.VAL NPP NMS")
+        field(INPE,"1.0")
+        field(PREC,"4")
+        field(FLNK, "$(RECNAME):YPOS")
+}
+
+record(calc,"$(RECNAME):YPOS") {
+        field(DESC,"YPOS")
+        field(SCAN,"Passive")
+        field(CALC,"E*(A-C)/(A+C)")
+        field(INPA,"$(RECNAME):CH0.VAL NPP NMS")
+        field(INPB,"$(RECNAME):CH1.VAL NPP NMS")
+        field(INPC,"$(RECNAME):CH2.VAL NPP NMS")
+        field(INPD,"$(RECNAME):CH3.VAL NPP NMS")
+        field(INPE,"1.0")
+        field(PREC,"4")
+}
+
+record(bo,"$(RECNAME):DoConfig")
+{
+   field(ONAM, "Configure")
+   field(ZNAM, "---")
+   field(FLNK, "$(RECNAME):Configure")
+}
+
+record(stringout,"$(RECNAME):BoxName")
+{
+   field(VAL, "$(BOX)")
+}
+
+record(genSub, "$(RECNAME):Configure") {
+  field(DESC, "Configure IPIMB")
+  field(SCAN, "Passive")
+  field(PINI, "NO")
+  field(INAM, "ipimbConfigInit")
+  field(SNAM, "ipimbConfigProc")
+  field(BRSV, "INVALID")
+
+## trigger counter low
+  field(INPA, "0")
+  field(FTA,  "ULONG")
+  field(NOA,  "1")
+## trigger counter high
+  field(INPB, "0")
+  field(FTB,  "ULONG")
+  field(NOB,  "1")
+## Serial ID low
+  field(INPC, "0")
+  field(FTC,  "ULONG")
+  field(NOC,  "1")
+## Serial ID high 
+  field(INPD, "0")
+  field(FTD,  "ULONG")
+  field(NOD,  "1")
+## ChargeAmpRange
+  field(INPE, "0")
+  field(FTE,  "USHORT")
+  field(NOE,  "1")
+## CaliRange
+  field(INPF, "0")
+  field(FTF,  "USHORT")
+  field(NOF,  "1")
+## RstLength
+  field(INPG, "0")
+  field(FTG,  "ULONG")
+  field(NOG,  "1")
+## RstDelay
+  field(INPH, "0")
+  field(FTH,  "USHORT")
+  field(NOH,  "1")
+## ChargeAmpRefV
+  field(INPI, "0")
+  field(FTI,  "FLOAT")
+  field(NOI,  "1")
+## CaliV
+  field(INPJ, "0")
+  field(FTJ,  "FLOAT")
+  field(NOJ,  "1")
+## diodeBias
+  field(INPK, "0")
+  field(FTK,  "FLOAT")
+  field(NOK,  "1")
+## Status
+  field(INPL, "0")
+  field(FTL,  "USHORT")
+  field(NOL,  "1")
+## errors
+  field(INPM, "0")
+  field(FTM,  "USHORT")
+  field(NOM,  "1")
+## CalStrobeLength
+  field(INPN, "0")
+  field(FTN,  "USHORT")
+  field(NON,  "1")
+## trigDelay
+  field(INPO, "0")
+  field(FTO,  "ULONG")
+  field(NOO,  "1")
+## trigPsDelay
+  field(INPP, "0")
+  field(FTP,  "ULONG")
+  field(NOP,  "1")
+## adcDelay
+  field(INPQ, "0")
+  field(FTQ,  "ULONG")
+  field(NOQ,  "1")
+
+# Box name
+  field(INPU, "$(RECNAME):BoxName")
+
+}
+
