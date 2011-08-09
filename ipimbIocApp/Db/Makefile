@@ -14,6 +14,7 @@ DB += iocAdmin.db
 DB += ioc-tst-05.db
 DB += ioc-xrt-xcsimb1.db
 DB += ioc-xrt-xcsimb3.db
+DB += evr-ipimb.db
 
 #----------------------------------------------------
 # Create and install (or just install)

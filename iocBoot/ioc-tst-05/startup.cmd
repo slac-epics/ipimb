@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Setup the IOC user environment
-# TODO: Change xxx as needed for your hutch
-source /reg/d/iocCommon/All/xxx_env.sh
+source /reg/d/iocCommon/All/tst_env.sh
 
 # Make sure the IOC's data directories are ready for use
 export IOC="ioc-tst-05"
@@ -14,7 +13,7 @@ $RUNUSER "mkdir -p $IOC_DATA/$IOC/iocInfo"
 $RUNUSER "chmod ug+w -R $IOC_DATA/$IOC"
 
 # For release
-#cd $EPICS_SITE_TOP/ioc/xxx/ipimbIoc/R0.1.0/iocBoot/ioc-tst-05
+#cd $EPICS_SITE_TOP/modules/ipimb/R0.1.0/iocBoot/ioc-tst-05
 
 # Copy the archive file to iocData
 $RUNUSER "cp ../../archive/$IOC.archive $IOC_DATA/$IOC/archive"

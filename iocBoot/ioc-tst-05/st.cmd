@@ -14,7 +14,7 @@
 ## ex. AMO:R15:IOC:23
 ##
 
-epicsEnvSet( "ENGINEER", "your_name (pengs)" )
+epicsEnvSet( "ENGINEER", "Sheng Peng (pengs)" )
 epicsEnvSet( "LOCATION", "TST:R40:IOC:22" )
 epicsEnvSet( "IOCSH_PS1", "ioc-tst-05> " )
 < envPaths
@@ -27,10 +27,16 @@ cd( "../.." )
 dbLoadDatabase("dbd/ipimbIoc.dbd")
 ipimbIoc_registerRecordDeviceDriver(pdbbase)
 
+ErDebugLevel( 0 )
+
 ipimbAdd("HFX-DG1-IPM-01", "/dev/ttyPS0", "239.255.24.4")
 
+# Initialize PMC EVR
+ErConfigure( 0, 0, 0, 0, 1 )
+
 # Load record instances
-dbLoadRecords( "db/iocAdmin.db",			"IOC=TST:R40:IOC:22" )
+dbLoadRecords( "db/evr-ipimb.db", "IOC=TST:R40:IOC:22,EVR=TST:R40:EVR:22" )
+dbLoadRecords( "db/iocAdmin.db",		"IOC=TST:R40:IOC:22" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=TST:R40:IOC:22" )
 dbLoadRecords( "db/ioc-tst-05.db")
 

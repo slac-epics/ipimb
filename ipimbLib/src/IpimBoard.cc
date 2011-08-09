@@ -393,6 +393,7 @@ IpimBoardData IpimBoard::WaitData() {
   }
 
   IpimBoardPsData data = IpimBoardPsData(_dataList, _baselineSubtraction, _polarity, _history, _dataDamage);
+  _dataDamage = false;	//Sheng Peng
   int c = data.CheckCRC();
   if (!c) {
     if (DEBUG or KvetchCounter++<AllowedKvetches) {

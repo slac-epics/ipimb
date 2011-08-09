@@ -20,6 +20,8 @@ ipimbIoc_DBD += iocAdmin.dbd
 ipimbIoc_DBD += autosaveSupport.dbd
 ipimbIoc_DBD += ipimb.dbd
 ipimbIoc_DBD += genSubRecord.dbd
+ipimbIoc_DBD += evrSupport.dbd
+ipimbIoc_DBD += devMrfEr.dbd
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 ipimbIoc_SRCS += ipimbIoc_registerRecordDeviceDriver.cpp
@@ -32,6 +34,11 @@ ipimbIoc_LIBS += devIocStats
 ipimbIoc_LIBS += autosave
 ipimbIoc_LIBS += genSub
 ipimbIoc_LIBS += ipimb
+ipimbIoc_LIBS += generalTime
+ipimbIoc_LIBS += evrSupport
+ipimbIoc_LIBS += devMrfEr
+ipimbIoc_LIBS += drvMrf
+ipimbIoc_LIBS += mrfApi
 ipimbIoc_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #===========================

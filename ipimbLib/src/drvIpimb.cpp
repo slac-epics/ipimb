@@ -52,6 +52,10 @@ static void IPIMB_Receive_Task(IPIMB_DEVICE  * pdevice)
                jj = 0;
                pdevice->ipmData.dumpRaw();
             }
+
+            epicsTimeStamp evt_time;
+            epicsTimeGetEvent(&evt_time, 1);
+            //printf("nsec is 0x%08X\n", evt_time.nsec);
             scanIoRequest(pdevice->ioscan);
 
             //epicsMutexUnlock(pdevice->mutex_lock);
