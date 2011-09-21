@@ -27,6 +27,8 @@ static void IPIMB_Receive_Task(IPIMB_DEVICE  * pdevice)
         {
             epicsMutexLock(pdevice->mutex_lock);
             printf("Start to do configuration for [%s]\n", pdevice->name);
+            /* Sigh.  These are not initialized by the configuration!!! */
+            pdevice->ipmBoard.setBaselineSubtraction(0, 1);
             pdevice->ipmBoard.configure(pdevice->ipmConfig);
 
             struct timespec req = {0, 3000000000}; // 3000 ms

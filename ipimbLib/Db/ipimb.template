@@ -324,11 +324,12 @@ record(ao,"$(RECNAME):DiodeBias")
 record(longout,"$(RECNAME):TrigDelay")
 {
    field(DESC, "Trig Delay")
-   field(DRVH, "150000")
+   field(DRVH, "500000")
    field(DRVL, "40000")
-   field(HOPR, "150000")
+   field(HOPR, "500000")
    field(LOPR, "40000")
    field(EGU,  "ns")
+   field(VAL,  "250000")
    field(FLNK, "$(RECNAME):Configure")
 }
 

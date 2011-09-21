@@ -103,9 +103,9 @@ file fiducial.db
 #       DEVICE  Name of the IOC, IOC:<loca>:<unit>
 #
 #==============================================================================
-# Do we need this?
-#file evrEventAll.db
-#{
-#	{   DEVICE=$(IOC)   }
-#}
+# Do we need this? Yes, otherwise we don't get timestamps!
+file evrEventAll.db
+{
+	{   DEVICE=$(IOC)   }
+}
 

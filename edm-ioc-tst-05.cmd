@@ -17,8 +17,7 @@ export PATH=$PATH:$EPICS_SITE_TOP/extensions/current/bin/$EPICS_HOST_ARCH
 export EDMDATAFILES=".:.."
 
 edm -x -m "IOC=TST:R40:IOC:22,RECNAME=HFX:DG1:IPM:01" -eolc ipimbScreens/ipimb.edl &
-# cd /reg/g/pcds/package/epics/3.14/modules
-cd ../..
+cd /reg/g/pcds/package/epics/3.14/modules
 cd event/
 cd R3.2.0-1.7.0/
 edm -x -m "IOC=TST:R40:IOC:22,EVR=TST:R40:EVR:22" evrscreens/evr.edl  &
