@@ -14,7 +14,7 @@
 ## ex. AMO:R15:IOC:23
 ##
 
-epicsEnvSet( "ENGINEER", "your_name (pengs)" )
+epicsEnvSet( "ENGINEER", "Michael Browne (mcbrowne)" )
 epicsEnvSet( "LOCATION", "XRT:R04:IOC:35" )
 epicsEnvSet( "IOCSH_PS1", "ioc-xrt-xcsimb1> " )
 < envPaths
@@ -27,10 +27,15 @@ cd( "../.." )
 dbLoadDatabase("dbd/ipimbIoc.dbd")
 ipimbIoc_registerRecordDeviceDriver(pdbbase)
 
-ipimbAdd("HXX-UM6-IMB-01", "/dev/ttyPS0", "239.255.24.4")
-ipimbAdd("HXX-UM6-IMB-02", "/dev/ttyPS1", "239.255.24.5")
+ErDebugLevel( 0 )
+
+ipimbAdd("HXX-UM6-PIM-01", "/dev/ttyPS0", "239.255.24.4")
+
+# Initialize PMC EVR
+ErConfigure( 0, 0, 0, 0, 1 )
 
 # Load record instances
+dbLoadRecords( "db/evr-ipimb.db", "IOC=XRT:R04:IOC:35,EVR=XRT:R04:EVR:35" )
 dbLoadRecords( "db/iocAdmin.db",		"IOC=XRT:R04:IOC:35" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=XRT:R04:IOC:35" )
 dbLoadRecords( "db/ioc-xrt-xcsimb1.db")

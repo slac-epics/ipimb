@@ -10,5 +10,5 @@ file ipimb.template
 {
 	pattern
 	{ RECNAME    , BOX      }
-	{ HFX:DG1:IPM:01 , HFX-DG1-IPM-01 }
+	{ TST:R01:PIM:01 , TST-R01-PIM-01 }
 }

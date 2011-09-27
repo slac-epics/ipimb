@@ -10,6 +10,5 @@ file ipimb.template
 {
 	pattern
 	{ RECNAME    , BOX      }
-	{ HXX:UM6:IMB:01 , HXX-UM6-IMB-01 }
-	{ HXX:UM6:IMB:02 , HXX-UM6-IMB-02 }
+	{ HXX:UM6:PIM:01 , HXX-UM6-PIM-01 }
 }

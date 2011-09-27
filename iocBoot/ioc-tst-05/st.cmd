@@ -15,7 +15,7 @@
 ##
 
 epicsEnvSet( "ENGINEER", "Sheng Peng (pengs)" )
-epicsEnvSet( "LOCATION", "TST:R40:IOC:22" )
+epicsEnvSet( "LOCATION", "TST:R01:IOC:22" )
 epicsEnvSet( "IOCSH_PS1", "ioc-tst-05> " )
 < envPaths
 cd( "../.." )
@@ -29,21 +29,21 @@ ipimbIoc_registerRecordDeviceDriver(pdbbase)
 
 ErDebugLevel( 0 )
 
-ipimbAdd("HFX-DG1-IPM-01", "/dev/ttyPS0", "239.255.24.4")
+ipimbAdd("TST-R01-PIM-01", "/dev/ttyPS0", "239.255.24.4")
 
 # Initialize PMC EVR
 ErConfigure( 0, 0, 0, 0, 1 )
 
 # Load record instances
-dbLoadRecords( "db/evr-ipimb.db", "IOC=TST:R40:IOC:22,EVR=TST:R40:EVR:22" )
-dbLoadRecords( "db/iocAdmin.db",		"IOC=TST:R40:IOC:22" )
-dbLoadRecords( "db/save_restoreStatus.db",	"IOC=TST:R40:IOC:22" )
+dbLoadRecords( "db/evr-ipimb.db", "IOC=TST:R01:IOC:22,EVR=TST:R01:EVR:22" )
+dbLoadRecords( "db/iocAdmin.db",		"IOC=TST:R01:IOC:22" )
+dbLoadRecords( "db/save_restoreStatus.db",	"IOC=TST:R01:IOC:22" )
 dbLoadRecords( "db/ioc-tst-05.db")
 
 # Setup autosave
 set_savefile_path( "$(IOC_DATA)/$(IOC)/autosave" )
 set_requestfile_path( "$(TOP)/autosave" )
-save_restoreSet_status_prefix( "TST:R40:IOC:22:" )
+save_restoreSet_status_prefix( "TST:R01:IOC:22:" )
 save_restoreSet_IncompleteSetsOk( 1 )
 save_restoreSet_DatedBackupFiles( 1 )
 set_pass0_restoreFile( "autosave_ipimbIoc.sav" )
@@ -53,7 +53,7 @@ set_pass1_restoreFile( "autosave_ipimbIoc.sav" )
 iocInit()
 
 # Start autosave backups
-create_monitor_set( "autosave_ipimbIoc.req", 5, "IOC=TST:R40:IOC:22" )
+create_monitor_set( "autosave_ipimbIoc.req", 5, "IOC=TST:R01:IOC:22" )
 
 # All IOCs should dump some common info after initial startup.
 < /reg/d/iocCommon/All/post_linux.cmd

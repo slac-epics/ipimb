@@ -18,6 +18,6 @@ export EDMDATAFILES=".:.."
 
 cd /reg/g/pcds/package/epics/3.14/modules/ipimb/Development
 
-#edm -x -m "IOC=XRT:R04:IOC:35" -eolc ipimbIocScreens/ipimbIoc.edl &
-edm -x -m "IOC=XRT:R04:IOC:35,RECNAME=HXX:UM6:IMB:01" -eolc ipimbScreens/ipimb.edl &
-edm -x -m "IOC=XRT:R04:IOC:35,RECNAME=HXX:UM6:IMB:02" -eolc ipimbScreens/ipimb.edl &
+edm -x -m "IOC=XRT:R04:IOC:35,RECNAME=HXX:UM6:PIM:01" -eolc ipimbScreens/ipimb.edl &
+cd /reg/g/pcds/package/epics/3.14/modules/event/R3.2.0-1.7.0
+edm -x -m "IOC=XRT:R04:IOC:35,EVR=XRT:R04:EVR:35" evrscreens/evr.edl  &
