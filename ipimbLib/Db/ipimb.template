@@ -317,6 +317,7 @@ record(ao,"$(RECNAME):DiodeBias")
    field(DRVL, "0")
    field(HOPR, "200")
    field(LOPR, "0")
+   field(VAL,  "30")
    field(EGU,  "Volt")
    field(FLNK, "$(RECNAME):Configure")
 }
