@@ -1,4 +1,4 @@
-record(ai, "$(RECNAME):CH0") {
+record(ai, "$(RECNAME):CH0_RAW") {
   field(DESC, "Analog Input")
   field(SCAN, "I/O Intr")
   field(DTYP, "IPIMB")
@@ -23,10 +23,27 @@ record(ai, "$(RECNAME):CH0") {
 #  field(LLSV, "MAJOR")
   field(TSE, "142")
 #  field(TSEL, "link to EVR")
-  field(FLNK, "$(RECNAME):CH1")
+  field(FLNK, "$(RECNAME):CH0")
 }
 
-record(ai, "$(RECNAME):CH1") {
+record(calc,"$(RECNAME):CH0") {
+  field(DESC,"Analog Input")
+  field(SCAN,"Passive")
+  field(CALC,"(B+C-A)*(D+E)")
+  field(HOPR, "10")
+  field(LOPR, "0")
+  field(INPA,"$(RECNAME):CH0_RAW.VAL NPP NMS")
+  field(INPB,"$(RECNAME):CH0_BASE0.VAL NPP NMS")
+  field(INPC,"$(RECNAME):CH0_BASE1.VAL NPP NMS")
+  field(INPD,"$(RECNAME):CH0_SCALE0.VAL NPP NMS")
+  field(INPE,"$(RECNAME):CH0_SCALE1.VAL NPP NMS")
+  field(PREC,"4")
+  field(EGU,  "Volt")
+  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(FLNK, "$(RECNAME):CH1_RAW")
+}
+
+record(ai, "$(RECNAME):CH1_RAW") {
   field(DESC, "Analog Input")
 #  field(SCAN, "I/O Intr")
   field(DTYP, "IPIMB")
@@ -49,11 +66,26 @@ record(ai, "$(RECNAME):CH1") {
 #  field(HSV,  "MINOR")
 #  field(LSV,  "MINOR")
 #  field(LLSV, "MAJOR")
-  field(TSEL, "$(RECNAME):CH0.TIME")
-  field(FLNK, "$(RECNAME):CH2")
+  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(FLNK, "$(RECNAME):CH1")
 }
 
-record(ai, "$(RECNAME):CH2") {
+record(calc,"$(RECNAME):CH1") {
+  field(DESC,"Analog Input")
+  field(SCAN,"Passive")
+  field(CALC,"(B+C-A)*(D+E)")
+  field(INPA,"$(RECNAME):CH1_RAW.VAL NPP NMS")
+  field(INPB,"$(RECNAME):CH1_BASE0.VAL NPP NMS")
+  field(INPC,"$(RECNAME):CH1_BASE1.VAL NPP NMS")
+  field(INPD,"$(RECNAME):CH1_SCALE0.VAL NPP NMS")
+  field(INPE,"$(RECNAME):CH1_SCALE1.VAL NPP NMS")
+  field(PREC,"4")
+  field(EGU,  "Volt")
+  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(FLNK, "$(RECNAME):CH2_RAW")
+}
+
+record(ai, "$(RECNAME):CH2_RAW") {
   field(DESC, "Analog Input")
 #  field(SCAN, "I/O Intr")
   field(DTYP, "IPIMB")
@@ -76,11 +108,26 @@ record(ai, "$(RECNAME):CH2") {
 #  field(HSV,  "MINOR")
 #  field(LSV,  "MINOR")
 #  field(LLSV, "MAJOR")
-  field(TSEL, "$(RECNAME):CH0.TIME")
-  field(FLNK, "$(RECNAME):CH3")
+  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(FLNK, "$(RECNAME):CH2")
 }
 
-record(ai, "$(RECNAME):CH3") {
+record(calc,"$(RECNAME):CH2") {
+  field(DESC,"Analog Input")
+  field(SCAN,"Passive")
+  field(CALC,"(B+C-A)*(D+E)")
+  field(INPA,"$(RECNAME):CH2_RAW.VAL NPP NMS")
+  field(INPB,"$(RECNAME):CH2_BASE0.VAL NPP NMS")
+  field(INPC,"$(RECNAME):CH2_BASE1.VAL NPP NMS")
+  field(INPD,"$(RECNAME):CH2_SCALE0.VAL NPP NMS")
+  field(INPE,"$(RECNAME):CH2_SCALE1.VAL NPP NMS")
+  field(PREC,"4")
+  field(EGU,  "Volt")
+  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(FLNK, "$(RECNAME):CH3_RAW")
+}
+
+record(ai, "$(RECNAME):CH3_RAW") {
   field(DESC, "Analog Input")
 #  field(SCAN, "I/O Intr")
   field(DTYP, "IPIMB")
@@ -103,7 +150,22 @@ record(ai, "$(RECNAME):CH3") {
 #  field(HSV,  "MINOR")
 #  field(LSV,  "MINOR")
 #  field(LLSV, "MAJOR")
-  field(TSEL, "$(RECNAME):CH0.TIME")
+  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(FLNK, "$(RECNAME):CH3")
+}
+
+record(calc,"$(RECNAME):CH3") {
+  field(DESC,"Analog Input")
+  field(SCAN,"Passive")
+  field(CALC,"(B+C-A)*(D+E)")
+  field(INPA,"$(RECNAME):CH3_RAW.VAL NPP NMS")
+  field(INPB,"$(RECNAME):CH3_BASE0.VAL NPP NMS")
+  field(INPC,"$(RECNAME):CH3_BASE1.VAL NPP NMS")
+  field(INPD,"$(RECNAME):CH3_SCALE0.VAL NPP NMS")
+  field(INPE,"$(RECNAME):CH3_SCALE1.VAL NPP NMS")
+  field(PREC,"4")
+  field(EGU,  "Volt")
+  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
   field(FLNK, "$(RECNAME):SUM")
 }
 
@@ -116,7 +178,7 @@ record(calc,"$(RECNAME):SUM") {
         field(INPC,"$(RECNAME):CH2.VAL NPP NMS")
         field(INPD,"$(RECNAME):CH3.VAL NPP NMS")
         field(PREC,"4")
-        field(TSEL, "$(RECNAME):CH0.TIME")
+        field(TSEL, "$(RECNAME):CH0_RAW.TIME")
         field(FLNK, "$(RECNAME):XPOS")
 }
 
@@ -130,7 +192,7 @@ record(calc,"$(RECNAME):XPOS") {
         field(INPD,"$(RECNAME):CH3.VAL NPP NMS")
         field(INPE,"1.0")
         field(PREC,"4")
-        field(TSEL, "$(RECNAME):CH0.TIME")
+        field(TSEL, "$(RECNAME):CH0_RAW.TIME")
         field(FLNK, "$(RECNAME):YPOS")
 }
 
@@ -144,7 +206,7 @@ record(calc,"$(RECNAME):YPOS") {
         field(INPD,"$(RECNAME):CH3.VAL NPP NMS")
         field(INPE,"1.0")
         field(PREC,"4")
-        field(TSEL, "$(RECNAME):CH0.TIME")
+        field(TSEL, "$(RECNAME):CH0_RAW.TIME")
 }
 
 record(bo,"$(RECNAME):DoConfig")
@@ -191,7 +253,97 @@ record(mbbo,"$(RECNAME):ChargeAmpRangeCH0")
   field(TTST, "All Open")
   field(FTVL, "14")
   field(FTST, "14nF, All Close")
+  field(FLNK, "$(RECNAME):ChargeAmpRangeFanout0")
+}
+
+record(fanout, "$(RECNAME):ChargeAmpRangeFanout0")
+{
+  field(LNK1, "$(RECNAME):CH0_IDX0")
+  field(LNK2, "$(RECNAME):ChargeAmpRange")
+}
+
+record(calc, "$(RECNAME):CH0_IDX0")
+{
+  field(DESC,"CH0 low index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? A : 7")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH0")
+  field(FLNK, "$(RECNAME):CH0_IDX1")
+}
+
+record(calc, "$(RECNAME):CH0_IDX1")
+{
+  field(DESC,"CH0 high index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? 7 : (A-7)")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH0")
+  field(FLNK, "$(RECNAME):CH0_BASE0")
+  field(VAL, "7")
+}
+
+record(sel,"$(RECNAME):CH0_BASE0")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH0_IDX0")
+  field(FLNK, "$(RECNAME):CH0_BASE1")
+  field(VAL, "5")
+}
+
+record(sel,"$(RECNAME):CH0_BASE1")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH0_IDX1")
+  field(FLNK, "$(RECNAME):CH0_SCALE0")
+  field(VAL, "0")
+}
+
+record(sel,"$(RECNAME):CH0_SCALE0")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH0_IDX0")
+  field(FLNK, "$(RECNAME):CH0_SCALE1")
+  field(VAL, "1")
+}
+
+record(sel,"$(RECNAME):CH0_SCALE1")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH0_IDX1")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH0")
   field(FLNK, "$(RECNAME):ChargeAmpRange")
+  field(VAL, "0")
 }
 
 record(mbbo,"$(RECNAME):ChargeAmpRangeCH1")
@@ -226,7 +378,97 @@ record(mbbo,"$(RECNAME):ChargeAmpRangeCH1")
   field(TTST, "All Open")
   field(FTVL, "14")
   field(FTST, "14nF, All Close")
+  field(FLNK, "$(RECNAME):ChargeAmpRangeFanout1")
+}
+
+record(fanout, "$(RECNAME):ChargeAmpRangeFanout1")
+{
+  field(LNK1, "$(RECNAME):CH1_IDX0")
+  field(LNK2, "$(RECNAME):ChargeAmpRange")
+}
+
+record(calc, "$(RECNAME):CH1_IDX0")
+{
+  field(DESC,"CH1 low index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? A : 7")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH1")
+  field(FLNK, "$(RECNAME):CH1_IDX1")
+}
+
+record(calc, "$(RECNAME):CH1_IDX1")
+{
+  field(DESC,"CH1 high index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? 7 : (A-7)")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH1")
+  field(FLNK, "$(RECNAME):CH1_BASE0")
+  field(VAL, "7")
+}
+
+record(sel,"$(RECNAME):CH1_BASE0")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH1_IDX0")
+  field(FLNK, "$(RECNAME):CH1_BASE1")
+  field(VAL, "5")
+}
+
+record(sel,"$(RECNAME):CH1_BASE1")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH1_IDX1")
+  field(FLNK, "$(RECNAME):CH1_SCALE0")
+  field(VAL, "0")
+}
+
+record(sel,"$(RECNAME):CH1_SCALE0")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH1_IDX0")
+  field(FLNK, "$(RECNAME):CH1_SCALE1")
+  field(VAL, "1")
+}
+
+record(sel,"$(RECNAME):CH1_SCALE1")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH1_IDX1")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH1")
   field(FLNK, "$(RECNAME):ChargeAmpRange")
+  field(VAL, "0")
 }
 
 record(mbbo,"$(RECNAME):ChargeAmpRangeCH2")
@@ -261,7 +503,97 @@ record(mbbo,"$(RECNAME):ChargeAmpRangeCH2")
   field(TTST, "All Open")
   field(FTVL, "14")
   field(FTST, "14nF, All Close")
+  field(FLNK, "$(RECNAME):ChargeAmpRangeFanout2")
+}
+
+record(fanout, "$(RECNAME):ChargeAmpRangeFanout2")
+{
+  field(LNK1, "$(RECNAME):CH2_IDX0")
+  field(LNK2, "$(RECNAME):ChargeAmpRange")
+}
+
+record(calc, "$(RECNAME):CH2_IDX0")
+{
+  field(DESC,"CH2 low index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? A : 7")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH2")
+  field(FLNK, "$(RECNAME):CH2_IDX1")
+}
+
+record(calc, "$(RECNAME):CH2_IDX1")
+{
+  field(DESC,"CH2 high index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? 7 : (A-7)")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH2")
+  field(FLNK, "$(RECNAME):CH2_BASE0")
+  field(VAL, "7")
+}
+
+record(sel,"$(RECNAME):CH2_BASE0")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH2_IDX0")
+  field(FLNK, "$(RECNAME):CH2_BASE1")
+  field(VAL, "5")
+}
+
+record(sel,"$(RECNAME):CH2_BASE1")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH2_IDX1")
+  field(FLNK, "$(RECNAME):CH2_SCALE0")
+  field(VAL, "0")
+}
+
+record(sel,"$(RECNAME):CH2_SCALE0")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH2_IDX0")
+  field(FLNK, "$(RECNAME):CH2_SCALE1")
+  field(VAL, "1")
+}
+
+record(sel,"$(RECNAME):CH2_SCALE1")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH2_IDX1")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH2")
   field(FLNK, "$(RECNAME):ChargeAmpRange")
+  field(VAL, "0")
 }
 
 record(mbbo,"$(RECNAME):ChargeAmpRangeCH3")
@@ -296,7 +628,97 @@ record(mbbo,"$(RECNAME):ChargeAmpRangeCH3")
   field(TTST, "All Open")
   field(FTVL, "14")
   field(FTST, "14nF, All Close")
+  field(FLNK, "$(RECNAME):ChargeAmpRangeFanout3")
+}
+
+record(fanout, "$(RECNAME):ChargeAmpRangeFanout3")
+{
+  field(LNK1, "$(RECNAME):CH3_IDX0")
+  field(LNK2, "$(RECNAME):ChargeAmpRange")
+}
+
+record(calc, "$(RECNAME):CH3_IDX0")
+{
+  field(DESC,"CH3 low index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? A : 7")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH3")
+  field(FLNK, "$(RECNAME):CH3_IDX1")
+}
+
+record(calc, "$(RECNAME):CH3_IDX1")
+{
+  field(DESC,"CH3 high index")
+  field(SCAN,"Passive")
+  field(CALC,"(A<7) ? 7 : (A-7)")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH3")
+  field(FLNK, "$(RECNAME):CH3_BASE0")
+  field(VAL, "7")
+}
+
+record(sel,"$(RECNAME):CH3_BASE0")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH3_IDX0")
+  field(FLNK, "$(RECNAME):CH3_BASE1")
+  field(VAL, "5")
+}
+
+record(sel,"$(RECNAME):CH3_BASE1")
+{
+  field(INPA, "5")
+  field(INPB, "5")
+  field(INPC, "5")
+  field(INPD, "5")
+  field(INPE, "5")
+  field(INPF, "5")
+  field(INPG, "5")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH3_IDX1")
+  field(FLNK, "$(RECNAME):CH3_SCALE0")
+  field(VAL, "0")
+}
+
+record(sel,"$(RECNAME):CH3_SCALE0")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH3_IDX0")
+  field(FLNK, "$(RECNAME):CH3_SCALE1")
+  field(VAL, "1")
+}
+
+record(sel,"$(RECNAME):CH3_SCALE1")
+{
+  field(INPA, "1")
+  field(INPB, "1")
+  field(INPC, "1")
+  field(INPD, "1")
+  field(INPE, "1")
+  field(INPF, "1")
+  field(INPG, "1")
+  field(INPH, "0")
+  field(SELM, "Specified")
+  field(NVL, "$(RECNAME):CH3_IDX1")
+  field(INPA, "$(RECNAME):ChargeAmpRangeCH3")
   field(FLNK, "$(RECNAME):ChargeAmpRange")
+  field(VAL, "0")
 }
 
 record(calc,"$(RECNAME):ChargeAmpRange")

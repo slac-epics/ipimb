@@ -848,7 +848,7 @@ x 180
 y 76
 w 76
 h 32
-controlPv "$(RECNAME):CH0.EGUL"
+controlPv "$(RECNAME):CH0_RAW.EGUL"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -865,7 +865,7 @@ x 180
 y 44
 w 76
 h 32
-controlPv "$(RECNAME):CH0.EGUF"
+controlPv "$(RECNAME):CH0_RAW.EGUF"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -981,7 +981,7 @@ x 180
 y 144
 w 76
 h 32
-controlPv "$(RECNAME):CH1.EGUL"
+controlPv "$(RECNAME):CH1_RAW.EGUL"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -998,7 +998,7 @@ x 180
 y 112
 w 76
 h 32
-controlPv "$(RECNAME):CH1.EGUF"
+controlPv "$(RECNAME):CH1_RAW.EGUF"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -1114,7 +1114,7 @@ x 180
 y 220
 w 76
 h 32
-controlPv "$(RECNAME):CH2.EGUL"
+controlPv "$(RECNAME):CH2_RAW.EGUL"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -1131,7 +1131,7 @@ x 180
 y 188
 w 76
 h 32
-controlPv "$(RECNAME):CH2.EGUF"
+controlPv "$(RECNAME):CH2_RAW.EGUF"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -1247,7 +1247,7 @@ x 180
 y 292
 w 76
 h 32
-controlPv "$(RECNAME):CH3.EGUL"
+controlPv "$(RECNAME):CH3_RAW.EGUL"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -1264,7 +1264,7 @@ x 180
 y 260
 w 76
 h 32
-controlPv "$(RECNAME):CH3.EGUF"
+controlPv "$(RECNAME):CH3_RAW.EGUF"
 fgColor index 39
 bgColor index 1
 font "helvetica-medium-r-8.0"
@@ -1443,7 +1443,7 @@ x 12
 y 412
 w 120
 h 36
-controlPv "$(RECNAME):CH0.TSE"
+controlPv "$(RECNAME):CH0_RAW.TSE"
 displayMode "decimal"
 fgColor index 39
 bgColor index 1
