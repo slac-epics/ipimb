@@ -22,6 +22,7 @@ ipimbIoc_DBD += ipimb.dbd
 ipimbIoc_DBD += genSubRecord.dbd
 ipimbIoc_DBD += evrSupport.dbd
 ipimbIoc_DBD += devMrfEr.dbd
+ipimbIoc_DBD += bigselRecord.dbd
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 ipimbIoc_SRCS += ipimbIoc_registerRecordDeviceDriver.cpp

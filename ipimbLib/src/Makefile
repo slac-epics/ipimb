@@ -13,6 +13,7 @@ LIBRARY_IOC_Linux = ipimb
 
 # ipimb.dbd will be made up from these files:
 DBD += ipimb.dbd
+DBD += bigselRecord.dbd
 
 # Add any header files here which should be installed
 #INC	+=	drvIpimb.h
@@ -24,6 +25,7 @@ HTMLS_DIR	= .
 
 # Add any source files here
 # Note: No lib will be built if no sources are listed here
+LIBSRCS += bigselRecord.c
 LIBSRCS += drvIpimb.cpp
 LIBSRCS += devIpimb.cpp
 LIBSRCS += devIpimbReg.c
