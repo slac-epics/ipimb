@@ -1,0 +1,3 @@
+$(RECNAME):CH0_RAW.TSE
+$(RECNAME):DiodeBias.VAL
+$(RECNAME):TrigDelay.VAL

@@ -1,0 +1,14 @@
+file autosave_ipimbCH.tpl-req
+{
+        pattern
+        { CHANNEL }
+        { 0,      }
+        { 1,      }
+        { 2,      }
+        { 3,      }
+}
+
+file autosave_ipimbALL.tpl-req
+{
+        { RECNAME = $(RECNAME) }
+}
