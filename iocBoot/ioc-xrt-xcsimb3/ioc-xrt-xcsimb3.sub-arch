@@ -1,5 +1,5 @@
 # IOC archive file
-## Replace TST:R40:IOC:22 with the PV prefix used for
+## Replace XRT:R38:IOC:43 with the PV prefix used for
 ## iocAdmin PV's on this IOC
 
 # Generate IOC archive request 

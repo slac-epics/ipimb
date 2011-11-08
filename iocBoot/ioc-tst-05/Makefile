@@ -14,6 +14,8 @@ USR_ARCHIVEFLAGS += -V
 #
 ARCHIVE += ioc-tst-05.archive
 
+REQ += ioc-tst-05.req
+
 # See RULES.copy for more information on these variables.
 COPY_ONLY_IF_NON_LOCAL=1
 COPY_SUBDIR=iocBoot/ioc-tst-05
@@ -21,4 +23,5 @@ COPY_FILES=st.cmd
 
 include $(TOP)/configure/RULES.ioc
 -include $(TOP)/configure/RULES.archive
+-include $(TOP)/configure/RULES.autosave
 -include $(TOP)/configure/RULES.copy

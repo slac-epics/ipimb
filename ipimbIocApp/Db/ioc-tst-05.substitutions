@@ -6,9 +6,9 @@
 #
 #==============================================================================
 #
-file ipimb.template
+file ipimb.db
 {
 	pattern
-	{ RECNAME    , BOX      }
+	{ RECNAME        , BOX            }
 	{ TST:R01:PIM:01 , TST-R01-PIM-01 }
 }

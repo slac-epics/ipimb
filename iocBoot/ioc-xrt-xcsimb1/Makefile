@@ -13,6 +13,7 @@ USR_ARCHIVEFLAGS += -V
 # Create and install IOC archive file
 #
 ARCHIVE += ioc-xrt-xcsimb1.archive
+REQ += ioc-xrt-xcsimb1.req
 
 # See RULES.copy for more information on these variables.
 COPY_ONLY_IF_NON_LOCAL=1
@@ -21,4 +22,5 @@ COPY_FILES=st.cmd
 
 include $(TOP)/configure/RULES.ioc
 -include $(TOP)/configure/RULES.archive
+-include $(TOP)/configure/RULES.autosave
 -include $(TOP)/configure/RULES.copy

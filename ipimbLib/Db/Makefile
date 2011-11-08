@@ -11,15 +11,14 @@ include $(TOP)/configure/CONFIG
 # Create and install (or just install)
 # databases, templates, substitutions like this
 # DB += ipimb.db
-DB += ipimb.template
-DB += ipimb.substitutions
+DB += ipimb.db
+#DB += ipimb.substitutions
 
 #----------------------------------------------------
 # Create and install (or just install)
 # Autosave request files, templates, substitutions like this
 # REQ += autosave_ipimb.req
-REQ += autosave_ipimb.template
-REQ += autosave_ipimb.substitutions
+REQ += autosave_ipimb.req
 
 #----------------------------------------------------
 # Create and install (or just install)

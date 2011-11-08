@@ -46,14 +46,14 @@ set_requestfile_path( "$(TOP)/autosave" )
 save_restoreSet_status_prefix( "TST:R01:IOC:22:" )
 save_restoreSet_IncompleteSetsOk( 1 )
 save_restoreSet_DatedBackupFiles( 1 )
-set_pass0_restoreFile( "autosave_ipimbIoc.sav" )
-set_pass1_restoreFile( "autosave_ipimbIoc.sav" )
+set_pass0_restoreFile( "ioc-tst-05.sav" )
+set_pass1_restoreFile( "ioc-tst-05.sav" )
 
 # Initialize the IOC and start processing records
 iocInit()
 
 # Start autosave backups
-create_monitor_set( "autosave_ipimbIoc.req", 5, "IOC=TST:R01:IOC:22" )
+create_monitor_set( "ioc-tst-05.req", 5, "IOC=TST:R01:IOC:22:" )
 
 # All IOCs should dump some common info after initial startup.
 < /reg/d/iocCommon/All/post_linux.cmd

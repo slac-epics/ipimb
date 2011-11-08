@@ -6,7 +6,7 @@
 #
 #==============================================================================
 #
-file ipimb.template
+file ipimb.db
 {
 	pattern
 	{ RECNAME    , BOX      }

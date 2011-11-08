@@ -1,0 +1,10 @@
+# IOC archive file
+## Replace XRT:R04:IOC:35 with the PV prefix used for
+## iocAdmin PV's on this IOC
+
+# Generate IOC archive request 
+file autosave_ipimb.req
+{
+	{ RECNAME = "XRT:R38:IOC:43" }
+}
+

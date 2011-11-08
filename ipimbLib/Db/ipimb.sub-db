@@ -1,0 +1,14 @@
+file ipimbCH.tpl-db
+{
+        pattern
+        { CHANNEL, RAWTSE,                                     CHNEXT }
+        { 0,       "field(TSE, 142)",                          "field(FLNK, \"$(RECNAME):CH1_RAW\")" }
+	{ 1,       "field(TSEL, \"$(RECNAME):CH0_RAW.TIME\")", "field(FLNK, \"$(RECNAME):CH2_RAW\")" }
+	{ 2,       "field(TSEL, \"$(RECNAME):CH0_RAW.TIME\")", "field(FLNK, \"$(RECNAME):CH3_RAW\")" }
+	{ 3,       "field(TSEL, \"$(RECNAME):CH0_RAW.TIME\")", ""                                    }
+}
+
+file ipimbALL.tpl-db
+{
+	{ IOC = $(IOC) }
+}
