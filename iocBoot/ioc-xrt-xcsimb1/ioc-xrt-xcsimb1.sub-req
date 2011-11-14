@@ -5,6 +5,6 @@
 # Generate IOC archive request 
 file autosave_ipimb.req
 {
-	{ RECNAME = "XRT:R04:IOC:35" }
+	{ RECNAME = "HXX:UM6:PIM:01" }
 }
 
