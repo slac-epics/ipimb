@@ -21,11 +21,18 @@ void ConfigV2::dump() const {
   printf("Trigger counter 0x%llx\n", triggerCounter());
   printf("Serial ID 0x%llx\n", serialID());
   printf("Charge amp settings 0x%x\n", chargeAmpRange());
+  printf("Calibration range   0x%x\n", calibrationRange());
   printf("Reset length %ld ns\n", (unsigned long)resetLength());
   printf("Reset delay %d ns\n", resetDelay());
   printf("Reference voltage %f V\n", chargeAmpRefVoltage());
+  printf("Calibration voltage %f V\n", calibrationVoltage());
   printf("Diode bias %f V\n", diodeBias());
-  printf("Sample delay %ld ns\n", (unsigned long)trigDelay());
+  printf("Status 0x%x\n", status());
+  printf("Errors 0x%x\n", errors());
+  printf("Cal Strobe Length 0x%x\n", calStrobeLength());
+  printf("Trig delay %ld ns\n", (unsigned long)trigDelay());
+  printf("Trig PS delay %ld ns\n", (unsigned long)trigPsDelay());
+  printf("ADC delay %ld ns\n", (unsigned long)adcDelay());
 }
 
 ConfigV2::ConfigV2 (uint16_t chargeAmpRange,

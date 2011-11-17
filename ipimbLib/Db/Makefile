@@ -13,6 +13,7 @@ include $(TOP)/configure/CONFIG
 # DB += ipimb.db
 DB += ipimb.db
 #DB += ipimb.substitutions
+DB += bldSettings.db
 
 #----------------------------------------------------
 # Create and install (or just install)

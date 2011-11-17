@@ -148,7 +148,7 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, uint16_t cal
                           uint16_t calStrobeLength, uint32_t trigDelay, uint32_t trigPsDelay, uint32_t adcDelay);
 IPIMB_DEVICE * ipimbFindDeviceByName(char * name);
 IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName);
-int		ipimbAdd(char * name, char * ttyName, char * mdestIP );
+    int		ipimbAdd(char * name, char * ttyName, char * mdestIP, unsigned int physID, unsigned int dtype );
 
 #ifdef	__cplusplus
 }

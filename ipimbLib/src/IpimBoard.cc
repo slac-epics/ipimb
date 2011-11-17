@@ -7,6 +7,8 @@
 #include <fcntl.h>
 #include <cmath>
 
+#include <stdlib.h>
+
 using namespace std;
 using namespace Pds;
 
@@ -352,11 +354,18 @@ unsigned IpimBoard::ReadRegister(unsigned regAddr) {
   IpimBoardPacketParser packetParser = IpimBoardPacketParser(true, &_commandResponseDamage, _commandList);
   struct timespec req = {0, 4000000}; // 4 ms - board takes a while to respond
   nanosleep(&req, NULL);
+  int nParses = 0;
   while (inWaiting(packetParser)) {
     if (!packetParser.packetIncomplete()) {
+      //      printf("while executes once regardless?\n");
       break;
     }
-    ;//timeout here?
+
+    nanosleep(&req, NULL);
+    if (nParses++ == 10 and inWaiting(packetParser)) {
+      _commandResponseDamage = true;
+      return 0xdead;
+    }
   }
   IpimBoardResponse resp = IpimBoardResponse(_commandList);
   if (!resp.CheckCRC()) {
@@ -403,8 +412,12 @@ IpimBoardData IpimBoard::WaitData() {
   }
   return IpimBoardData(data);
 }
-
 int IpimBoard::dataDamage() {
+  if (_dataDamage) {
+    int tmp = _dataDamage;
+    _dataDamage = 0;
+    return tmp;
+  }
   return _dataDamage;
 }
 
@@ -487,6 +500,11 @@ bool IpimBoard::configure(Ipimb::ConfigV2& config) {
   WriteRegister(errors, 0xffff);
 
   unsigned vhdlVersion = ReadRegister(vhdl_version);
+
+  if (_commandResponseDamage) {
+    printf("read of board failed - check serial and power connections of fd %d, device %s\nGiving up on configuration\n", _fd, _serialDevice);
+    return !_commandResponseDamage; // bail if can't read
+  }
 
   // hope to never want to calibrate in the daq environment
   bool lstCalibrateChannels[4] = {false, false, false, false};
@@ -702,6 +720,10 @@ IpimBoardPsData::IpimBoardPsData(unsigned* packet, const int baselineSubtraction
   _ch1 = 0;
   _ch2 = 0;
   _ch3 = 0;
+  _ch0_ps = 0;
+  _ch1_ps = 0;
+  _ch2_ps = 0;
+  _ch3_ps = 0;
   _checksum = 0;
   _dataDamage = dataDamage;
   _history = history;
@@ -723,6 +745,10 @@ IpimBoardPsData::IpimBoardPsData() { // for IpimbServer setup
   _ch1 = 0;
   _ch2 = 0;
   _ch3 = 0;
+  _ch0_ps = 0;
+  _ch1_ps = 0;
+  _ch2_ps = 0;
+  _ch3_ps = 0;
   _checksum = 0;//12345;
 }
 
@@ -952,6 +978,10 @@ uint16_t IpimBoardPsData::GetCh(int i) {
   return (uint16_t) _sampleChannel[i];
 }
 
+uint16_t IpimBoardPsData::GetCh_ps(int i) {
+  return (uint16_t) _presampleChannel[i];
+}
+
 unsigned IpimBoardPsData::GetConfig0() {
   return _config0;
 }
@@ -975,6 +1005,10 @@ IpimBoardData::IpimBoardData(IpimBoardPsData data) {
   _ch1 = data.GetCh(1);
   _ch2 = data.GetCh(2);
   _ch3 = data.GetCh(3);
+  _ch0_ps = data.GetCh_ps(0);
+  _ch1_ps = data.GetCh_ps(1);
+  _ch2_ps = data.GetCh_ps(2);
+  _ch3_ps = data.GetCh_ps(3);
   _checksum = data.GetChecksum();
  }
 
@@ -1069,6 +1103,10 @@ void IpimBoardPacketParser::update(char* buff) {
       printf("IpimBoard error parsing type %d packet, have found %d packets, %d allowed\n", _command, _nPackets, _allowedPackets);
     }
   }
+  //  if (!_command && (rand()%1000)<1) {
+  //    printf("setting fake damage now\n");
+  //    *_damage = true;
+  //  }
 }
 
 bool IpimBoardPacketParser::packetIncomplete() {

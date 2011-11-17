@@ -159,7 +159,38 @@ IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName)
     return pdevice;
 }
 
-int	 ipimbAdd(char * name, char *ttyName, char * mdestIP)
+extern "C" void BldRegister(unsigned int uPhysicalId, unsigned int uDataType, unsigned int pktsize,
+                            int (*func)(int iPvIndex, void* pPvValue, void* payload));
+
+static int ipimbSetPv(int iPvIndex, void* pPvValue, void* payload)
+{
+    if (iPvIndex) {
+        double* pSrcPvValue = (double*) pPvValue;
+        float* pDstPvValue = (float*)(sizeof(IpimBoardData) + sizeof(Ipimb::ConfigV2) + (char*) payload) + iPvIndex - 1;
+#ifdef __rtems__
+        /* Assume big endian! */
+        union { float fval; unsigned int uval } tmp;
+        tmp.fval = *pSrcPvValue;
+        tmp.uval = (tmp.uval&0xFF)<<24    | (tmp.uval&0xFF00)<<8 |
+                   (tmp.uval&0xFF0000)>>8 | (tmp.uval&0xFF000000)>>24;
+        *pDstPvValue = tmp.fval;
+#else
+        /* Assume little endian! */
+        *pDstPvValue = *pSrcPvValue;
+#endif
+    } else {
+        char name[64];
+        sscanf((char *)pPvValue, "@%[^:]:", name);
+        IPIMB_DEVICE  *pdevice = ipimbFindDeviceByName(name);
+        if (pdevice) {
+            memcpy((char *)payload, &pdevice->ipmData, sizeof(IpimBoardData));
+            memcpy(sizeof(IpimBoardData) + (char *)payload, &pdevice->ipmConfig, sizeof(Ipimb::ConfigV2));
+        }
+    }
+    return 0;
+}
+
+int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype)
 {
     IPIMB_DEVICE  * pdevice = NULL;
 
@@ -194,6 +225,9 @@ int	 ipimbAdd(char * name, char *ttyName, char * mdestIP)
 
     /* Create thread */
     epicsThreadMustCreate("ipimb_Rcvr", OPTHREAD_PRIORITY, OPTHREAD_STACK, (EPICSTHREADFUNC)IPIMB_Receive_Task, (void *)pdevice);
+
+    BldRegister(physID, dtype, sizeof(IpimBoardData) + sizeof(Ipimb::ConfigV2) + sizeof(Lusi::IpmFexV1),
+                ipimbSetPv);
 
     printf( "ipimb box [%s] at [%s] added.\n", name, ttyName );
     return(0);

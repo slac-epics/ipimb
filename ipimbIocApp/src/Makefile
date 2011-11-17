@@ -23,6 +23,7 @@ ipimbIoc_DBD += genSubRecord.dbd
 ipimbIoc_DBD += evrSupport.dbd
 ipimbIoc_DBD += devMrfEr.dbd
 ipimbIoc_DBD += bigselRecord.dbd
+ipimbIoc_DBD += bldClient.dbd
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 ipimbIoc_SRCS += ipimbIoc_registerRecordDeviceDriver.cpp
@@ -40,6 +41,7 @@ ipimbIoc_LIBS += evrSupport
 ipimbIoc_LIBS += devMrfEr
 ipimbIoc_LIBS += drvMrf
 ipimbIoc_LIBS += mrfApi
+ipimbIoc_LIBS += bldClient
 ipimbIoc_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #===========================

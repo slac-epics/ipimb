@@ -32,10 +32,14 @@ static void IPIMB_DEV_DEBUGCall(const iocshArgBuf * args) {
 static const iocshArg ipimbAddArg0 = {"name", iocshArgString};
 static const iocshArg ipimbAddArg1 = {"ttyName", iocshArgString};
 static const iocshArg ipimbAddArg2 = {"mdestIP", iocshArgString};
-static const iocshArg *const ipimbAddArgs[3] = {&ipimbAddArg0, &ipimbAddArg1, &ipimbAddArg2};
-static const iocshFuncDef ipimbAddDef = {"ipimbAdd", 3, ipimbAddArgs};
+static const iocshArg ipimbAddArg3 = {"physID", iocshArgInt};
+static const iocshArg ipimbAddArg4 = {"datatype", iocshArgInt};
+static const iocshArg *const ipimbAddArgs[5] = {&ipimbAddArg0, &ipimbAddArg1, &ipimbAddArg2, &ipimbAddArg3,
+                                                &ipimbAddArg4};
+static const iocshFuncDef ipimbAddDef = {"ipimbAdd", 5, ipimbAddArgs};
 static void ipimbAddCall(const iocshArgBuf * args) {
-        ipimbAdd( (char *)(args[0].sval), (char *)(args[1].sval), (char *)(args[2].sval) );
+    ipimbAdd( (char *)(args[0].sval), (char *)(args[1].sval), (char *)(args[2].sval),
+              (unsigned int) args[3].ival, (unsigned int) args[4].ival );
 }
 
 void drvIPIMB_Register() {
