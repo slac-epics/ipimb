@@ -11,9 +11,6 @@ include $(TOP)/configure/CONFIG
 # Create and install (or just install)
 # databases, templates, substitutions like this
 DB += iocAdmin.db
-DB += ioc-tst-05.db
-DB += ioc-xrt-xcsimb1.db
-DB += ioc-xrt-xcsimb3.db
 DB += evr-ipimb.db
 
 #----------------------------------------------------

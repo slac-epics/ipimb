@@ -40,7 +40,7 @@ dbLoadRecords( "db/evr-ipimb.db", "IOC=XRT:R04:IOC:35,EVR=XRT:R04:EVR:35" )
 dbLoadRecords( "db/iocAdmin.db",		"IOC=XRT:R04:IOC:35" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=XRT:R04:IOC:35" )
 dbLoadRecords( "db/bldSettings.db",             "IOC=XRT:R04:IOC:35" )
-dbLoadRecords( "db/ioc-xrt-xcsimb1.db")
+dbLoadRecords( "db/ipimb.db",                   "RECNAME=HXX:UM6:PIM:01,BOX=HXX-UM6-PIM-01")
 
 # Setup autosave
 set_savefile_path( "$(IOC_DATA)/$(IOC)/autosave" )
@@ -59,11 +59,12 @@ create_monitor_set( "autosave_ipimbIoc.req", 5, "IOC=XRT:R04:IOC:35" )
 
 # BldConfig sAddr uPort uMaxDataSize sInterfaceIp uSrcPyhsicalId iDataType sBldPvTrigger sBldPvFiducial sBldPvList
 # EVENT14CNT is EVR event 140
-BldConfig( "239.255.24.40", 10148, 512, 0, 4, 35, "XRT:R04:EVR:35:EVENT14CNT", "XRT:R04:PIM:01:YPOS", "XRT:R04:IOC:35:PATTERN.L", "XRT:R04:PIM:01:CH0_RAW.INP,XRT:R04:PIM:01:CH0,XRT:R04:PIM:01:CH1,XRT:R04:PIM:01:CH2,XRT:R04:PIM:01:CH3,XRT:R04:PIM:01:SUM,XRT:R04:PIM:01:XPOS,XRT:R04:PIM:01:YPOS" )
+BldConfig( "239.255.24.4", 10148, 512, 0, 4, 35, "XRT:R04:EVR:35:EVENT14CNT", "XRT:R04:PIM:01:YPOS", "XRT:R04:IOC:35:PATTERN.L", "XRT:R04:PIM:01:CH0_RAW.INP,XRT:R04:PIM:01:CH0,XRT:R04:PIM:01:CH1,XRT:R04:PIM:01:CH2,XRT:R04:PIM:01:CH3,XRT:R04:PIM:01:SUM,XRT:R04:PIM:01:XPOS,XRT:R04:PIM:01:YPOS" )
 BldSetDebugLevel(1)
 BldStart()
 BldIsStarted()
 BldShowConfig()
+# Don't really send BLDs for now!
 BldStop()
 
 # All IOCs should dump some common info after initial startup.

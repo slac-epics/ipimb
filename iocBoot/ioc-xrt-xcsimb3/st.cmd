@@ -38,6 +38,12 @@ ipimbAdd("HFX-DG3-IMB-02", "/dev/ttyPS6", "239.255.24.11")
 dbLoadRecords( "db/iocAdmin.db",		"IOC=XRT:R38:IOC:43" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=XRT:R38:IOC:43" )
 dbLoadRecords( "db/ioc-xrt-xcsimb3.db")
+dbLoadRecords( "db/ipimb.db, "RECNAME=HFX:DG2:IMB:01,BOX=HFX-DG2-IMB-01")
+dbLoadRecords( "db/ipimb.db, "RECNAME=HFX:DG2:IMB:02,BOX=HFX-DG2-IMB-02")
+dbLoadRecords( "db/ipimb.db, "RECNAME=XCS:DG3:IMB:03,BOX=XCS-DG3-IMB-03")
+dbLoadRecords( "db/ipimb.db, "RECNAME=XCS:DG3:IMB:04,BOX=XCS-DG3-IMB-04")
+dbLoadRecords( "db/ipimb.db, "RECNAME=HFX:DG3:IMB:01,BOX=HFX-DG3-IMB-01")
+dbLoadRecords( "db/ipimb.db, "RECNAME=HFX:DG3:IMB:02,BOX=HFX-DG3-IMB-02")
 
 # Setup autosave
 set_savefile_path( "$(IOC_DATA)/$(IOC)/autosave" )

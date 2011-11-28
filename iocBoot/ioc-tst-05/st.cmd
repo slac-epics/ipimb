@@ -40,7 +40,7 @@ dbLoadRecords( "db/evr-ipimb.db",		"IOC=TST:R01:IOC:22,EVR=TST:R01:EVR:22" )
 dbLoadRecords( "db/iocAdmin.db",		"IOC=TST:R01:IOC:22" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=TST:R01:IOC:22" )
 dbLoadRecords( "db/bldSettings.db",             "IOC=TST:R01:IOC:22" )
-dbLoadRecords( "db/ioc-tst-05.db")
+dbLoadRecords( "db/ipimb.db",                   "RECNAME=TST:R01:PIM:01,BOX=TST-R01-PIM-01")
 
 # Setup autosave
 set_savefile_path( "$(IOC_DATA)/$(IOC)/autosave" )
@@ -64,6 +64,7 @@ BldSetDebugLevel(1)
 BldStart()
 BldIsStarted()
 BldShowConfig()
+# Don't really send BLDs for now!
 BldStop()
 
 # All IOCs should dump some common info after initial startup.
