@@ -17,7 +17,7 @@ AUTOSAVE_MODULE_VERSION=R4.2.1.2-1.2.0
 GENSUB_MODULE_VERSION=R1.6.1.2-1.0.0
 GENERALTIME_MODULE_VERSION=R1.2.2.2-1.0.0
 EVENT_MODULE_VERSION=R3.2.0-1.7.0
-BLDCLIENT_MODULE_VERSION=R2.0.3
+BLDCLIENT_MODULE_VERSION=R2.0.4
 
 # ============================================================
 # External Support module path definitions
