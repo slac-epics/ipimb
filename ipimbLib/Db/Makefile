@@ -14,6 +14,7 @@ include $(TOP)/configure/CONFIG
 DB += ipimb.db
 #DB += ipimb.substitutions
 DB += bldSettings.db
+DB += bldFanout.db
 
 #----------------------------------------------------
 # Create and install (or just install)
