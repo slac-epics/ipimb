@@ -27,7 +27,6 @@ REQ += autosave_ipimb.req
 # Archive files, templates, substitutions like this
 # ARCHIVE += archive_ipimb.archive
 ARCHIVE += archive_ipimb.template
-ARCHIVE += archive_ipimb.substitutions
 
 include $(TOP)/configure/RULES
 #----------------------------------------

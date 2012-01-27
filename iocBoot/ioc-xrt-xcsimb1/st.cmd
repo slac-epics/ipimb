@@ -40,7 +40,7 @@ dbLoadRecords( "db/evr-ipimb.db", "IOC=XRT:R04:IOC:35,EVR=XRT:R04:EVR:35" )
 dbLoadRecords( "db/iocAdmin.db",		"IOC=XRT:R04:IOC:35" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=XRT:R04:IOC:35" )
 dbLoadRecords( "db/bldSettings.db",             "IOC=XRT:R04:IOC:35" )
-dbLoadRecords( "db/ipimb.db",                   "RECNAME=HXX:UM6:PIM:01,BOX=HXX-UM6-PIM-01,CH0=HXX:UM6:PIM:01:CH0,CH1=HXX:UM6:PIM:01:CH1,CH2=HXX:UM6:PIM:01:CH2,CH3=HXX:UM6:PIM:01:CH3")
+dbLoadRecords( "db/ipimb.db",                   "RECNAME=HXX:UM6:PIM:01,BOX=HXX-UM6-PIM-01")
 
 # Setup autosave
 set_savefile_path( "$(IOC_DATA)/$(IOC)/autosave" )

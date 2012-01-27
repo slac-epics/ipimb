@@ -17,10 +17,10 @@ record(ai, "$(RECNAME):CH$(CHANNEL)_RAW") {
   field(EGU,  "Volt")
   field(LINR, "LINEAR")
   $(RAWTSE)
-  field(FLNK, "$(CHNAME)")
+  field(FLNK, "$(RECNAME):CH$(CHANNEL)")
 }
 
-record(calc,"$(CHNAME)") {
+record(calc,"$(RECNAME):CH$(CHANNEL)") {
   field(DESC,"Analog Input")
   field(SCAN,"Passive")
   field(CALC,"(B-A)*C")
