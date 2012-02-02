@@ -5,6 +5,7 @@ TOP = ../..
 include $(TOP)/configure/CONFIG
 ARCH = linux-x86
 TARGETS = envPaths
+COMMON_DIR = .
 
 # Make sure these archive files are fully expanded
 USR_ARCHIVEFLAGS += -V

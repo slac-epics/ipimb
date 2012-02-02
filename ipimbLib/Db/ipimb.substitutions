@@ -1,17 +1,14 @@
-#
-# ipimb database substitutions file
-#
-
-# Generate ipimb db file 
-#	Macros:
-#		TODO:	List here any macros used in the template
-#				Note which ones have defaults.
-file _ipimb.template
+file ipimbCH.tpl-db
 {
-	{
-		# Hack till msi supports empty substitutions
-		RECNAME		=	HFX:DG1:IPM,
-		BOX		=	HFX:DG1:IPM
-	}
+        pattern
+        { CHANNEL, RAWTSE,                                     CHNEXT }
+        { 0,       "field(TSE, 142)",                          "field(FLNK, \"$(RECNAME):CH1_RAW\")" }
+	{ 1,       "field(TSEL, \"$(RECNAME):CH0_RAW.TIME\")", "field(FLNK, \"$(RECNAME):CH2_RAW\")" }
+	{ 2,       "field(TSEL, \"$(RECNAME):CH0_RAW.TIME\")", "field(FLNK, \"$(RECNAME):CH3_RAW\")" }
+	{ 3,       "field(TSEL, \"$(RECNAME):CH0_RAW.TIME\")", "field(FLNK, \"$(RECNAME):SUM\")" }
 }
 
+file ipimbALL.tpl-db
+{
+	{ IOC = $(IOC) }
+}

@@ -36,7 +36,6 @@ ipimbIoc_LIBS += devIocStats
 ipimbIoc_LIBS += autosave
 ipimbIoc_LIBS += genSub
 ipimbIoc_LIBS += ipimb
-ipimbIoc_LIBS += generalTime
 ipimbIoc_LIBS += evrSupport
 ipimbIoc_LIBS += devMrfEr
 ipimbIoc_LIBS += drvMrf
