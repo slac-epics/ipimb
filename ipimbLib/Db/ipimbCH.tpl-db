@@ -32,6 +32,7 @@ record(calc,"$(RECNAME):CH$(CHANNEL)") {
   field(PREC,"4")
   field(EGU,  "Volt")
   field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(MDEL, "-1")
   $(CHNEXT)
 }
 
