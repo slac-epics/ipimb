@@ -10,7 +10,7 @@
 #	Macros:
 #		IOC		- PV prefix for all iocAdmin PV's
 # Typically, IOC will be expanded in the iocBoot/<ioc_name>/Makefile
-file archive_iocAdmin.tpl-arch
+file archive_iocAdmin.template
 {
 	{
 		# Hack till msi supports empty substitutions
@@ -23,7 +23,7 @@ file archive_iocAdmin.tpl-arch
 #	Macros:
 #		IOC		- PV prefix for all IOC Save/Restore PV's
 # Typically, IOC will be expanded in the iocBoot/<ioc_name>/Makefile
-file archive_SR.tpl-arch
+file archive_SR.template
 {
 	{
 		# Hack till msi supports empty substitutions
