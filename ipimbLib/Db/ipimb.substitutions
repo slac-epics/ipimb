@@ -1,4 +1,4 @@
-file ipimbCH.tpl-db
+file ipimbCH.template
 {
         pattern
         { CHANNEL, RAWTSE,                                     CHNEXT }
@@ -8,7 +8,7 @@ file ipimbCH.tpl-db
 	{ 3,       "field(TSEL, \"$(RECNAME):CH0_RAW.TIME\")", "field(FLNK, \"$(RECNAME):SUM\")" }
 }
 
-file ipimbALL.tpl-db
+file ipimbALL.template
 {
 	{ IOC = $(IOC) }
 }

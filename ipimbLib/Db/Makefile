@@ -26,7 +26,7 @@ REQ += autosave_ipimb.req
 # Create and install (or just install)
 # Archive files, templates, substitutions like this
 # ARCHIVE += archive_ipimb.archive
-ARCHIVE += archive_ipimb.template
+ARCHIVE += archive_ipimb.tpl-arch
 
 include $(TOP)/configure/RULES
 #----------------------------------------

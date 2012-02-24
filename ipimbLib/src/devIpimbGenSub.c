@@ -65,10 +65,12 @@ long ipimbConfigProc(struct genSubRecord *psub)
     int rtn;
     /* We don't care link here, so we only care value, type and size */
 
+#if 0
     uint32_t triggerCountLow    = * ( (uint32_t *) (psub->a));
     uint32_t triggerCountHigh   = * ( (uint32_t *) (psub->b));
     uint32_t serialIDLow       =  * ( (uint32_t *) (psub->c));
     uint32_t serialIDHigh       = * ( (uint32_t *) (psub->d));
+#endif
     uint16_t chargeAmpRange   = * ( (uint16_t *) (psub->e));
     uint16_t calibrationRange = * ( (uint16_t *) (psub->f));
     uint32_t resetLength       = *( (uint32_t *) (psub->g) );
@@ -76,8 +78,10 @@ long ipimbConfigProc(struct genSubRecord *psub)
     float chargeAmpRefVoltage    = *( (float *) (psub->i) );
     float calibrationVoltage    = *( (float *) (psub->j) );
     float diodeBias    = *( (float *) (psub->k) );
+#if 0
     uint16_t status     = * ((uint16_t *) (psub->l));
     uint16_t errors     = * ((uint16_t *) (psub->m));
+#endif
     uint16_t calStrobeLength     = * ((uint16_t *) (psub->n));
     uint32_t trigDelay       = * ((uint32_t *) (psub->o));
     uint32_t trigPsDelay       = * ((uint32_t *) (psub->p));

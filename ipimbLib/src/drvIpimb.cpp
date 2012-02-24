@@ -20,7 +20,7 @@ static epicsMutexId        IPIMB_device_list_lock = NULL;
 
 static void IPIMB_Receive_Task(IPIMB_DEVICE  * pdevice)
 {
-    int jj;
+    int jj = 0;
     while(TRUE)
     {
         if(pdevice->requestConf) // if request re-configuration
@@ -31,7 +31,7 @@ static void IPIMB_Receive_Task(IPIMB_DEVICE  * pdevice)
             pdevice->ipmBoard.setBaselineSubtraction(0, 1);
             pdevice->ipmBoard.configure(pdevice->ipmConfig);
 
-            struct timespec req = {0, 3000000000}; // 3000 ms
+            struct timespec req = {3, 0}; // 3000 ms
             nanosleep(&req, NULL);
 
             pdevice->confState = 1;
@@ -89,7 +89,7 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, uint16_t cal
                            float chargeAmpRefVoltage, float calibrationVoltage, float diodeBias,
                           uint16_t calStrobeLength, uint32_t trigDelay, uint32_t trigPsDelay, uint32_t adcDelay)
 {
-    bool rtn;
+    bool rtn	= false;
     IPIMB_DEVICE  * pdevice = NULL;
 
     if(ipimbName == NULL || !(pdevice = ipimbFindDeviceByName (ipimbName)) )

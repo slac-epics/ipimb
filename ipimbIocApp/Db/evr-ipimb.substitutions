@@ -5,6 +5,8 @@
 # Example:
 # dbLoadRecords( "db/evr-ipimb.db", "IOC=TST:R06:IOC:19,EVR=AMO:R06:EVR:19" )
 #
+
+# Need one instance of evrPmc230 for the card
 file evrPmc230.template
 {
 #		Device	Card
@@ -69,43 +71,22 @@ file evrPmcEvent.template
  	{ $(EVR),	0,		EVENT14,140,   0, 0, 0, 0, "Beam Full"     }
 }
 
-# For fiducial support
-file fiducial.db
+
+# Need one instance of fiducialTimestamp.db for
+# pattern processing and fiduicial ID timestamping
+file fiducialTimestamp.db
 {
 	{
-		IOC="$(IOC)",
 		DEV="$(EVR)",
-		CARD="0"
 	}
 }
 
-#
-#file evrPatternAll.db
-#{
-#	Device        ,  SLC Pattern, EVR/Trigger Links
-#	pattern { DEVICE        ,  LINK4      , LINK5 , LINK6 , TREF    , TS1ST, TS2ND }
-#          { IOC:FEE1:202 ,   ""        ,  ""   ,  ""   , 1.03E06 ,   1  ,   4   }
-#	{
-#		DEVICE=$(IOC),
-#		LINK4="",
-#		LINK5="",
-#		LINK6="",
-#		TREF=1.03E06,
-#		TS1ST=1,
-#		TS2ND=4
-#	}
-#}
 
-#==============================================================================
 #
-#         evrEventAll.db - instantiates records for each event code.
-#         Associated display is evrEventDiags.edl.
-#       DEVICE  Name of the IOC, IOC:<loca>:<unit>
-#
-#==============================================================================
-# Do we need this? Yes, otherwise we don't get timestamps!
-file evrEventAll.db
+# Creates records to support PCDS's standard set of
+# event codes for the LCLS accelerator and PCDS experiments
+file pcdsEventCodes.db
 {
-	{   DEVICE=$(IOC)   }
+   { DEV="$(EVR)", CARD="0" }
 }
 

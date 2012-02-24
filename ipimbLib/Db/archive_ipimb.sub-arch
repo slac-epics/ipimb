@@ -4,9 +4,9 @@
 
 # Generate ipimb archive file 
 #	Macros:
-#		TODO:	List here any macros used in the template
+#		TODO:	List here any macros used in the tpl-arch
 #				Note which ones have defaults.
-file archive_ipimb.template
+file archive_ipimb.tpl-arch
 {
 	{
 		# Hack till msi supports empty substitutions
