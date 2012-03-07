@@ -39,7 +39,7 @@ ErConfigure( 0, 0, 0, 0, 1 )
 
 # Load record instances
 dbLoadRecords( "db/evr-ipimb.db",		"IOC=TST:R01:IOC:22,EVR=TST:R01:EVR:22" )
-dbLoadRecords( "db/iocAdmin.db",		"IOC=TST:R01:IOC:22" )
+dbLoadRecords( "db/ipimb_iocAdmin.db",		"IOC=TST:R01:IOC:22" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=TST:R01:IOC:22" )
 dbLoadRecords( "db/bldSettings.db",             "IOC=TST:R01:IOC:22:B0,BLDNO=0" )
 dbLoadRecords( "db/bldFanout.db",               "IOC=TST:R01:IOC:22" )
