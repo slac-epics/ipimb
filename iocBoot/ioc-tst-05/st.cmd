@@ -33,14 +33,17 @@ ErDebugLevel( 0 )
 ipimbAdd("TST-R01-PIM-01", "/dev/ttyPS0", "239.255.24.40", 40, 35)
 
 # Initialize PMC EVR
+# Params: #, address, irqvector, irqlevel, formfactor.
+# The only one interesting here is the last: 0=cPCI, 1=PMC, 2=VME, 15=SLAC
 ErConfigure( 0, 0, 0, 0, 1 )
 
 # Load record instances
 dbLoadRecords( "db/evr-ipimb.db",		"IOC=TST:R01:IOC:22,EVR=TST:R01:EVR:22" )
 dbLoadRecords( "db/iocAdmin.db",		"IOC=TST:R01:IOC:22" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=TST:R01:IOC:22" )
-dbLoadRecords( "db/bldSettings.db",             "IOC=TST:R01:IOC:22" )
-dbLoadRecords( "db/ipimb.db",                   "RECNAME=TST:R01:PIM:01,BOX=TST-R01-PIM-01");
+dbLoadRecords( "db/bldSettings.db",             "IOC=TST:R01:IOC:22:B0,BLDNO=0" )
+dbLoadRecords( "db/bldFanout.db",               "IOC=TST:R01:IOC:22" )
+dbLoadRecords( "db/ipimb.db",                   "RECNAME=TST:R01:PIM:01,BOX=TST-R01-PIM-01")
 
 # Setup autosave
 set_savefile_path( "$(IOC_DATA)/$(IOC)/autosave" )
@@ -57,15 +60,21 @@ iocInit()
 # Start autosave backups
 create_monitor_set( "ioc-tst-05.req", 5, "IOC=TST:R01:IOC:22:" )
 
+# Point our real pretrigger to our BLD fanout.
+dbpf "TST:R01:EVR:22:EVENT14CNT.FLNK", "TST:R01:IOC:22:bldFanout"
+
 # BldConfig sAddr uPort uMaxDataSize sInterfaceIp uSrcPyhsicalId iDataType sBldPvTrigger sBldPvFiducial sBldPvList
 # EVENT14CNT is EVR event 140
-BldConfig( "239.255.24.40", 10148, 512, 0, 40, 35, "TST:R01:EVR:22:EVENT14CNT", "TST:R01:PIM:01:YPOS", "TST:R01:IOC:22:PATTERN.L", "TST:R01:PIM:01:CH0_RAW.INP,TST:R01:PIM:01:CH0,TST:R01:PIM:01:CH1,TST:R01:PIM:01:CH2,TST:R01:PIM:01:CH3,TST:R01:PIM:01:SUM,TST:R01:PIM:01:XPOS,TST:R01:PIM:01:YPOS" )
+BldSetID(0)
+BldConfig( "239.255.24.40", 10148, 512, 0, 40, 35, "TST:R01:IOC:22:bldFanout.LNK1", "TST:R01:PIM:01:YPOS", "TST:R01:EVR:22:PATTERN.L", "TST:R01:PIM:01:CH0_RAW.INP,TST:R01:PIM:01:CH0,TST:R01:PIM:01:CH1,TST:R01:PIM:01:CH2,TST:R01:PIM:01:CH3,TST:R01:PIM:01:SUM,TST:R01:PIM:01:XPOS,TST:R01:PIM:01:YPOS" )
 BldSetDebugLevel(1)
-BldStart()
-BldIsStarted()
 BldShowConfig()
-# Don't really send BLDs for now!
-BldStop()
+
+# Extra BLD routines of interest:
+# BldStart()
+# BldIsStarted()
+# BldStop()
+
 
 # All IOCs should dump some common info after initial startup.
 < /reg/d/iocCommon/All/post_linux.cmd

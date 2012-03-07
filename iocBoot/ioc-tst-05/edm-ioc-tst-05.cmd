@@ -16,15 +16,6 @@ export EDMWEBBROWSER=mozilla
 export PATH=$PATH:$EPICS_SITE_TOP/extensions/current/bin/$EPICS_HOST_ARCH
 export EDMDATAFILES=".:.."
 
-cd /reg/g/pcds/package/epics/3.14/modules/ipimb/Development
-
-#edm -x -m "IOC=XRT:R04:IOC:35" -eolc ipimbIocScreens/ipimbIoc.edl &
-
-edm -x -m "IOC=XRT:R38:IOC:43,RECNAME=HFX:DG2:IMB:01" -eolc ipimbScreens/ipimb.edl &
-edm -x -m "IOC=XRT:R38:IOC:43,RECNAME=HFX:DG2:IMB:02" -eolc ipimbScreens/ipimb.edl &
-edm -x -m "IOC=XRT:R38:IOC:43,RECNAME=XCS:DG3:IMB:03" -eolc ipimbScreens/ipimb.edl &
-edm -x -m "IOC=XRT:R38:IOC:43,RECNAME=XCS:DG3:IMB:04" -eolc ipimbScreens/ipimb.edl &
-edm -x -m "IOC=XRT:R38:IOC:43,RECNAME=HFX:DG3:IMB:01" -eolc ipimbScreens/ipimb.edl &
-edm -x -m "IOC=XRT:R38:IOC:43,RECNAME=HFX:DG3:IMB:02" -eolc ipimbScreens/ipimb.edl &
-
-#edm -x -m "RECNAME=HFX:DG3:IPM:01,IOC=XRT:R38:IOC:43" -eolc ipimbScreens/ipimb.edl
+edm -x -m "IOC=TST:R01:IOC:22,RECNAME=TST:R01:PIM:01" -eolc ipimbScreens/ipimb.edl &
+cd /reg/g/pcds/package/epics/3.14/modules/event/R3.2.0-1.7.0
+edm -x -m "IOC=TST:R01:IOC:22,EVR=TST:R01:EVR:22" evrscreens/evr.edl  &

@@ -14,7 +14,6 @@ USR_ARCHIVEFLAGS += -V
 # Create and install IOC archive file
 #
 ARCHIVE += ioc-tst-05.archive
-
 REQ += ioc-tst-05.req
 
 # See RULES.copy for more information on these variables.

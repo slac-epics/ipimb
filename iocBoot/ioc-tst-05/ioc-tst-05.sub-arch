@@ -8,3 +8,9 @@ file archive_ipimbIoc.archive
 	{ IOC = "TST:R01:IOC:22" }
 }
 
+#file archive_ipimb.archive
+#{
+#	pattern
+#	{ RECNAME }
+#	{ TST:R01:PIM:01 }
+#}
