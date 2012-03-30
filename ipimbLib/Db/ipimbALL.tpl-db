@@ -2,7 +2,39 @@
 # These are the records that are not per channel.
 #
 
-record(calc,"$(RECNAME):SUM") {
+#
+# Note that this writes a 0 to the output when all four inputs become 1, but
+# nothing when the inputs are reset to 0.
+#
+record(calcout, "$(RECNAME):DONE_CNT")
+{
+	field(DESC, "Count IPIMB=Done")
+	field(PINI, "YES")
+	field(CALC, "A+B+C+D=4?1:0")
+	field(OUT, "$(RECNAME):DONE_CNT_RESET PP")
+	field(OOPT, "Transition To Non-zero")
+	field(DOPT, "Use OCAL")
+	field(OCAL, "0")
+	field(IVOA, "Don't drive outputs")
+}
+
+#
+# When this is processed, we write zeroes to the inputs of DONE_CNT, and cause
+# it to process (and therefore reset without generating any output).  Then,
+# we continue to process the other records.
+#
+record(dfanout, "$(RECNAME):DONE_CNT_RESET")
+{
+	field(DESC, "Reset the DONE counter")
+	field(OUTA, "$(RECNAME):DONE_CNT.A")
+	field(OUTB, "$(RECNAME):DONE_CNT.B")
+	field(OUTC, "$(RECNAME):DONE_CNT.C")
+	field(OUTD, "$(RECNAME):DONE_CNT.D PP")
+	field(FLNK, "$(RECNAME):SUM")
+}
+
+record(calc,"$(RECNAME):SUM")
+{
         field(DESC,"SUM")
         field(SCAN,"Passive")
         field(CALC,"(A+B+C+D)")
@@ -15,7 +47,8 @@ record(calc,"$(RECNAME):SUM") {
         field(FLNK, "$(RECNAME):XPOS")
 }
 
-record(calc,"$(RECNAME):XPOS") {
+record(calc,"$(RECNAME):XPOS")
+{
         field(DESC,"XPOS")
         field(SCAN,"Passive")
         field(CALC,"E*(B-D)/(B+D)")
@@ -29,7 +62,8 @@ record(calc,"$(RECNAME):XPOS") {
         field(FLNK, "$(RECNAME):YPOS")
 }
 
-record(calc,"$(RECNAME):YPOS") {
+record(calc,"$(RECNAME):YPOS")
+{
         field(DESC,"YPOS")
         field(SCAN,"Passive")
         field(CALC,"E*(A-C)/(A+C)")
@@ -46,7 +80,7 @@ record(bo,"$(RECNAME):DoConfig")
 {
    field(ONAM, "Configure")
    field(ZNAM, "---")
-   field(FLNK, "$(RECNAME):Configure")
+   field(FLNK, "$(RECNAME):PreConfig")
 }
 
 record(stringout,"$(RECNAME):BoxName")
@@ -61,7 +95,7 @@ record(calc,"$(RECNAME):ChargeAmpRange")
    field(INPC, "$(RECNAME):ChargeAmpRangeCH2.RVAL")
    field(INPD, "$(RECNAME):ChargeAmpRangeCH3.RVAL")
    field(CALC, "(D<<12)|(C<<8)|(B<<4)|A")
-   field(FLNK, "$(RECNAME):Configure")
+   field(FLNK, "$(RECNAME):PreConfig")
 }
 
 record(ao,"$(RECNAME):DiodeBias")
@@ -74,7 +108,7 @@ record(ao,"$(RECNAME):DiodeBias")
    field(LOPR, "0")
    field(VAL,  "30")
    field(EGU,  "Volt")
-   field(FLNK, "$(RECNAME):Configure")
+   field(FLNK, "$(RECNAME):PreConfig")
 }
 
 record(longout,"$(RECNAME):TrigDelay")
@@ -86,6 +120,25 @@ record(longout,"$(RECNAME):TrigDelay")
    field(LOPR, "40000")
    field(EGU,  "ns")
    field(VAL,  "250000")
+   field(FLNK, "$(RECNAME):PreConfig")
+}
+
+#
+# This reads and stores the current TRIGGER in VAL, while writing a 0 to the
+# TRIGGER to disable it.
+#
+record(calcout, "$(RECNAME):PreConfig")
+{
+   field(DESC, "Trigger Save and Disable")
+   field(SCAN, "Passive")
+   field(CALC, "A")
+   field(HOPR, "10")
+   field(LOPR, "0")
+   field(INPA, "$(TRIGGER)")
+   field(OUT, "$(TRIGGER) PP")
+   field(DOPT, "Use OCAL")
+   field(OCAL, "0")
+   field(IVOA, "Don't drive outputs")
    field(FLNK, "$(RECNAME):Configure")
 }
 
@@ -169,5 +222,17 @@ record(genSub, "$(RECNAME):Configure") {
 # Box name
   field(INPU, "$(RECNAME):BoxName")
 
+  field(FLNK, "$(RECNAME):PostConfig")
 }
 
+record(calcout, "$(RECNAME):PostConfig")
+{
+   field(DESC, "Trigger Restore")
+   field(SCAN, "Passive")
+   field(CALC, "A")
+   field(HOPR, "10")
+   field(LOPR, "0")
+   field(INPA, "$(RECNAME):PreConfig")
+   field(OUT, "$(TRIGGER) PP")
+   field(IVOA, "Don't drive outputs")
+}

@@ -69,7 +69,7 @@
 /* We have an thread running to receive all IPIMB packets.                               */
 /* It then validates the packet and either puts into or appends to the link list          */
 /******************************************************************************************/
-#define OPTHREAD_PRIORITY       (50)            /* opthread Priority */
+#define OPTHREAD_PRIORITY       (90)            /* opthread Priority */
 #define OPTHREAD_STACK          (0x20000)       /* opthread Stack Size */
 /******************************************************************************************/
 
@@ -86,47 +86,32 @@ class IPIMB_DEVICE
 public:
     ELLNODE          node;              /* Linked List Node */
 
-    epicsMutexId     mutex_lock;
-
     char             * name;		/* name of IPIMB box */
     char             * ttyName;		/* ttyName of the serial port where IPIMB box is */
-    char             * mdestIPString; /* xxx.xxx.xxx.xxx:ppppp, max 22 bytes, for multicast dest */
+    char             * mdestIPString;   /* xxx.xxx.xxx.xxx:ppppp, max 22 bytes, for multicast dest */
     struct in_addr   ipaddr;            /* IP address, we don't keep name here since converting to name may block receive task */
 
     epicsTimeStamp   timestamp;         /* timestamp for the latest data */
-    IOSCANPVT                   ioscan;         /* Trigger EPICS record */
+    IOSCANPVT        ioscan;            /* Trigger EPICS record */
 
-    int              confState;         /* 0: never configured, 1: configured */
-    int              requestConf;       /* 0: no request, 1: request */
-
-    IpimBoard		ipmBoard;
-
-    Ipimb::ConfigV2          ipmConfig; 
-
-    //Ipimb::DataV2            ipmData; 
-    IpimBoardPsData            ipmPsData; /* data with presample info, after substraction of presample, load into ipmData */
-    IpimBoardData            ipmData; 
-
-    Lusi::IpmFexConfigV2     ipmFexConfig;	/* Load by user, not part of BLD */
-    Lusi::IpmFexV1	     calculatedIpmFex;	/* Calculated result, part of BLD */
+    Ipimb::ConfigV2  ipmConfig; 
+    IpimBoard	     ipmBoard;
+    IpimBoardData    ipmData;
 
 public:
-    IPIMB_DEVICE(char * ipmName, char *ipmTtyName, char * ipmMdestIP):ipmBoard(ipmTtyName),ipmPsData(),ipmData(ipmPsData)
+    IPIMB_DEVICE(char * ipmName, char *ipmTtyName, char * ipmMdestIP)
+        : ipmBoard(ipmTtyName, &ioscan), ipmData()
     {
         name = epicsStrDup(ipmName);
         ttyName = epicsStrDup(ipmTtyName);
         mdestIPString = epicsStrDup(ipmMdestIP);
-        mutex_lock = epicsMutexMustCreate();
         scanIoInit(&ioscan);
-        confState = 0;
-        requestConf = 0;
     }
     ~IPIMB_DEVICE()
     {
         free(name);
         free(ttyName);
         free(mdestIPString);
-        epicsMutexDestroy(mutex_lock);
     }
 
 private:
@@ -154,4 +139,3 @@ IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName);
 }
 #endif	/*	__cplusplus	*/
 #endif	/*	ipimbH	*/
-

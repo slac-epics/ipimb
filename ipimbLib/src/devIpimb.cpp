@@ -160,42 +160,41 @@ long ai_ioint_info(int cmd,aiRecord *pai,IOSCANPVT *iopvt)
 long read_ai(struct aiRecord *pai)
 {
     IPIMB_DEVDATA * pdevdata = (IPIMB_DEVDATA *)(pai->dpvt);
+    IpimBoardData *ipmData  = pdevdata->pdevice->ipmBoard.getData(&pai->time);
+    int status = -1;
 
-    int status=-1;
-
-    switch(pdevdata->funcflag)
-    {
+    switch(pdevdata->funcflag) {
     case IPIMB_AI_DATA:
-      {
-        switch(pdevdata->chnlnum)
-            {
+        if (ipmData) {
+            switch(pdevdata->chnlnum) {
             case 0:
-                pai->rval = pdevdata->pdevice->ipmData._ch0;
+                pai->rval = ipmData->ch0;
                 break;
             case 1:
-                pai->rval = pdevdata->pdevice->ipmData._ch1;
+                pai->rval = ipmData->ch1;
                 break;
             case 2:
-                pai->rval = pdevdata->pdevice->ipmData._ch2;
+                pai->rval = ipmData->ch2;
                 break;
             case 3:
             default:
-                pai->rval = pdevdata->pdevice->ipmData._ch3;
+                pai->rval = ipmData->ch3;
                 break;
             }
-        status = pdevdata->pdevice->ipmBoard.dataDamage();
-      }
-      break;
+        } else
+            pai->rval = 0;
+        status = ipmData ? 0 : -1;
+        break;
+    default:
+        pai->rval = 0;
+        status = -1;
     }
 
-    if(status)
-    {
+    if(status) {
         if(IPIMB_DEV_DEBUG) printf("Data damaged for record [%s]\n", pai->name);
         recGblSetSevr(pai, READ_ALARM, INVALID_ALARM);
         return 0;
-    }
-    else
-    {
+    } else {
         pai->udf=FALSE;
         return 0;/******** convert ****/
     }
@@ -203,33 +202,13 @@ long read_ai(struct aiRecord *pai)
 
 long ai_lincvt(struct aiRecord   *pai, int after)
 {
-
-        if(!after) return(0);
-        /* set linear conversion slope*/
-        pai->eslo = (pai->eguf - pai->egul)/(float)0x10000;
-        pai->roff = 0x0;
-        return(0);
+    if(!after) return(0);
+    /* set linear conversion slope*/
+    pai->eslo = (pai->eguf - pai->egul)/(float)0x10000;
+    pai->roff = 0x0;
+    return(0);
 }
 
 #ifdef  __cplusplus
 }
 #endif  /*      __cplusplus     */
-
-#if 0
-struct IPIMB_DEV_SUP_SET
-{
-    long            number;
-    DEVSUPFUN       report;
-    DEVSUPFUN       init;
-    DEVSUPFUN       init_record;
-    DEVSUPFUN       get_ioint_info;
-    DEVSUPFUN       read_ai;
-    DEVSUPFUN       special_linconv;
-} devAiIPIMB = {6, NULL, NULL, init_ai, ai_ioint_info, read_ai, ai_lincvt};
-
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
-epicsExportAddress(dset, devAiIPIMB);
-#endif
-
-#endif
-                   
