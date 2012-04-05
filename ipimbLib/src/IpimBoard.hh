@@ -79,8 +79,10 @@ namespace Pds {
             return v;
         }
         IpimBoardData() {};
-
-        uint64_t triggerCounter;
+        uint64_t triggerCounter() {
+            return (((uint64_t)tc[0]) << 48) | (((uint64_t)tc[1]) << 32) | (((uint64_t)tc[2]) << 16) | tc[3];
+        }
+        uint16_t tc[4];
         uint16_t config0;
         uint16_t config1;
         uint16_t config2;

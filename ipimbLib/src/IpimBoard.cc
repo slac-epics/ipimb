@@ -1,4 +1,5 @@
 #include "IpimBoard.hh"
+#include "evrTime.h"
 #include "unistd.h" //for sleep
 #include <iostream>
 #include "assert.h"
@@ -210,9 +211,11 @@ void IpimBoard::do_read()
 {
     int rd, len, blen, i, j, cmd;
     unsigned short *p;
-    epicsTimeStamp evt_time;
     unsigned crc;
     unsigned char rdbuf[3 * DataPackets];
+    uint64_t expected_cnt = 1, current_cnt;
+    int idx = -1, incr = 1;
+    IpimBoardData *d;
 
     for (;;) {
         rd = read(_fd, rdbuf, 1);
@@ -223,7 +226,9 @@ void IpimBoard::do_read()
             }
             continue;
         }
+#if 0
         epicsTimeGetEvent(&evt_time, 140); /* If this is data, this is its timestamp! */
+#endif
 
         /* Read the entire packet */
         cmd = COMMAND(rdbuf[0]);
@@ -278,7 +283,28 @@ void IpimBoard::do_read()
             if (DEBUG & (DEBUG_READER|DEBUG_DATA)) {
                 fprintf(stderr, "Got data packet in %d.\n", dbuf);
             }
-            ts[dbuf] = evt_time;
+            d = new (_data[dbuf]) IpimBoardData();
+            current_cnt = d->triggerCounter();
+            if (current_cnt != expected_cnt) {
+#if 0
+                printf("TC: expected %llx, have %llx\n", expected_cnt, current_cnt);
+                fflush(stdout);
+#endif
+                incr = current_cnt - expected_cnt + 1;
+                if (incr < 0 || incr > 5) { /* We've lost it... this is gibberish */
+#if 0
+                    if (current_cnt != 1) {
+                        printf("Resynchronizing IPIMB timestamps!\n");
+                        fflush(stdout);
+                    }
+#endif
+                    idx = -1;
+                    incr = 1;
+                }
+            } else
+                incr = 1;
+            expected_cnt = current_cnt + 1;
+            evrTimeGetFifo(&ts[dbuf], 140, &idx, incr);
             dbuf = dbuf ? 0 : 1;
             have_data = 1;
             scanIoRequest(*_ioscan);         /* Let'em know we have data! */
@@ -414,8 +440,9 @@ bool IpimBoard::configure(Ipimb::ConfigV2& config)
     bool lstCalibrateChannels[4] = {false, false, false, false};
     SetCalibrationMode(lstCalibrateChannels);
   
-    unsigned start0 = (unsigned) (0xFFFFFFFF&config.triggerCounter());
-    unsigned start1 = (unsigned) (0xFFFFFFFF00000000ULL&config.triggerCounter()>>32);
+    uint64_t tcnt = config.triggerCounter();
+    unsigned start0 = (unsigned) ((0xFFFFFFFF00000000ULL&tcnt)>>32);
+    unsigned start1 = (unsigned) (0xFFFFFFFF&tcnt);
     SetTriggerCounter(start0, start1);
 
     SetChargeAmplifierRef(config.chargeAmpRefVoltage());
