@@ -99,8 +99,8 @@ public:
     IpimBoardData    ipmData;
 
 public:
-    IPIMB_DEVICE(char * ipmName, char *ipmTtyName, char * ipmMdestIP)
-        : ipmBoard(ipmTtyName, &ioscan), ipmData()
+    IPIMB_DEVICE(char * ipmName, char *ipmTtyName, char * ipmMdestIP, int physID)
+        : ipmBoard(ipmTtyName, &ioscan, physID), ipmData()
     {
         name = epicsStrDup(ipmName);
         ttyName = epicsStrDup(ipmTtyName);

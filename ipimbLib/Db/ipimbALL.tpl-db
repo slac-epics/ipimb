@@ -30,7 +30,15 @@ record(dfanout, "$(RECNAME):DONE_CNT_RESET")
 	field(OUTB, "$(RECNAME):DONE_CNT.B")
 	field(OUTC, "$(RECNAME):DONE_CNT.C")
 	field(OUTD, "$(RECNAME):DONE_CNT.D PP")
-	field(FLNK, "$(RECNAME):SUM")
+	field(FLNK, "$(RECNAME):CURRENTFID")
+}
+
+record(genSub, "$(RECNAME):CURRENTFID") {
+  field(DESC, "Current Fiducial")
+  field(SCAN, "Passive")
+  field(SNAM, "evrTimeGetFiducial")
+  field(INPA, "$(RECNAME):CH0_RAW.NAME")
+  field(FLNK, "$(RECNAME):SUM")
 }
 
 record(calc,"$(RECNAME):SUM")

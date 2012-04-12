@@ -48,7 +48,6 @@ dbLoadRecords( "db/evr-ipimb.db", "IOC=$(IOCBASE),EVR=$(EVRBASE)" )
 dbLoadRecords( "db/ipimb_iocAdmin.db",		"IOC=$(IOCBASE)" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=$(IOCBASE)" )
 dbLoadRecords( "db/bldSettings.db",             "IOC=$(IOCBASE),BLDNO=0" )
-dbLoadRecords( "db/bldFanout.db",               "IOC=$(IOCBASE)" )
 dbLoadRecords( "db/ipimb.db",                   "RECNAME=$(IPIMBBASE),BOX=$(IPIMBNAME),TRIGGER=$(EVRBASE):CTRL.DG$(TRIGGER)E")
 
 # Setup autosave
@@ -66,13 +65,10 @@ iocInit()
 # Start autosave backups
 create_monitor_set( "$(IOCNAME).req", 5, "IOC=$(IOCBASE)" )
 
-# Point our real pretrigger to our BLD fanout.
-dbpf "$(EVRBASE):EVENT14CNT.FLNK", "$(IOCBASE):bldFanout"
-
 # BldConfig sAddr uPort uMaxDataSize sInterfaceIp uSrcPyhsicalId iDataType sBldPvTrigger sBldPvFiducial sBldPvList
 # EVENT14CNT is EVR event 140
 BldSetID(0)
-BldConfig( "239.255.24.$(IPIMBPHID)", 10148, 512, 0, $(IPIMBPHID), 35, "$(IOCBASE):bldFanout.LNK1", "$(IPIMBBASE):YPOS", "$(IOCBASE):PATTERN.L", "$(IPIMBBASE):CH0_RAW.INP,$(IPIMBBASE):CH0,$(IPIMBBASE):CH1,$(IPIMBBASE):CH2,$(IPIMBBASE):CH3,$(IPIMBBASE):SUM,$(IPIMBBASE):XPOS,$(IPIMBBASE):YPOS" )
+BldConfig( "239.255.24.$(IPIMBPHID)", 10148, 512, 0, $(IPIMBPHID), 35, "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):YPOS", "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):CH0_RAW.INP,$(IPIMBBASE):CH0,$(IPIMBBASE):CH1,$(IPIMBBASE):CH2,$(IPIMBBASE):CH3,$(IPIMBBASE):SUM,$(IPIMBBASE):XPOS,$(IPIMBBASE):YPOS" )
 BldSetDebugLevel(1)
 # Uncomment the next line for BLD generation.
 # BldStart()
@@ -80,6 +76,7 @@ BldShowConfig()
 
 # Configure the IPIMB.
 dbpf $(IPIMBBASE):DoConfig 1
+epicsThreadSleep(1)
 
 # Turn on the EVR trigger.
 dbpf $(EVRBASE):CTRL.DG$(TRIGGER)E Enabled

@@ -42,14 +42,15 @@ static const unsigned NewVhdlVersion = 0x00010000;
 #define DEBUG_REGISTER 8
 #define DEBUG_SYNC     16
 #define DEBUG_DATA     32
-static int DEBUG = 0;
+#define DEBUG_TC       64
+extern int IPIMB_BRD_DEBUG;
 
 static unsigned CRC(unsigned short* lst, int length)
 {
     unsigned crc = 0xffff;
     for (int l=0; l<length; l++) {
         unsigned short word = *lst;
-        if (DEBUG & DEBUG_CRC) {
+        if (IPIMB_BRD_DEBUG & DEBUG_CRC) {
             printf("In CRC, have word 0x%04x\n", word);
         }
         lst++;
@@ -95,7 +96,7 @@ IpimBoardCommand::IpimBoardCommand(bool write, unsigned address, unsigned data)
         _commandList[0] |= 1<<8;
     }
     _commandList[3] = CRC(_commandList, CRPackets-1);
-    if (DEBUG & DEBUG_COMMAND)
+    if (IPIMB_BRD_DEBUG & DEBUG_COMMAND)
         printf("data: 0x%x, address 0x%x, write %d, command list: 0x%x, 0x%x, 0x%x 0x%x\n", 
                data, address, write, _commandList[0], _commandList[1], _commandList[2], _commandList[3]);
 }
@@ -147,13 +148,14 @@ static void *ipimb_thread_body(void *p)
     return NULL;
 }
 
-IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan)
+IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID)
 {
     size_t stacksize;
     struct termios newtio;
     pthread_attr_t attr;
 
-    _serialDevice = serialDevice;
+    _physID = physID;
+    _serialDevice = strdup(serialDevice);
     _ioscan = ioscan;
 
     memset(&newtio, 0, sizeof(newtio));
@@ -193,6 +195,7 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan)
 IpimBoard::~IpimBoard() 
 {
     close(_fd);
+    delete _serialDevice;
     if (have_reader)
         pthread_kill(reader, SIGKILL);
 }
@@ -214,21 +217,84 @@ void IpimBoard::do_read()
     unsigned crc;
     unsigned char rdbuf[3 * DataPackets];
     uint64_t expected_cnt = 1, current_cnt;
-    int idx = -1, incr = 1;
+    int idx = -1, incr = 1, in_sync = 0;
+    unsigned fid = 0x1ffff, fid2;
+    epicsTimeStamp evt_time;
     IpimBoardData *d;
+    int status = 0, last_status = 0;
 
     for (;;) {
         rd = read(_fd, rdbuf, 1);
         if (rd <= 0 || !SOFR(rdbuf[0])) { /* Skip until we are in sync.  Do we ever want to quit?!? */
-            if (rd > 0 && (DEBUG & (DEBUG_READER|DEBUG_SYNC))) {
+            if (rd > 0 && (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_SYNC))) {
                 fprintf(stderr, "Ser R: 0x%02x (skipped)\n", rdbuf[0]);
                 fflush(stderr);
             }
             continue;
         }
-#if 0
-        epicsTimeGetEvent(&evt_time, 140); /* If this is data, this is its timestamp! */
-#endif
+
+        /*
+         * We want to see three EVR triggers in a row with good times.
+         * Then, we'll believe the fifo moving forward.
+         */
+        switch (in_sync) {
+        case 0:
+            idx = -1;
+            status = evrTimeGetFifo(&evt_time, 140, &idx, 1);
+            fid = evt_time.nsec & 0x1ffff;
+            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                printf("IPIMB resynch has initial fiducial 0x%x.\n", fid);
+                fflush(stdout);
+            }
+            if (fid != 0x1ffff)
+                in_sync = 1;
+            break;
+        case 1:
+            idx = -1;
+            status = evrTimeGetFifo(&evt_time, 140, &idx, 1);
+            fid2 = evt_time.nsec & 0x1ffff;
+            if (fid2 == 0x1ffff) {
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB resynch received invalid fiducial, retrying.\n");
+                    fflush(stdout);
+                }
+                in_sync = 0;
+                break;
+            }
+            fid = (0x20000 + 2 * fid2 - fid) & 0x1ffff;
+            if (fid > 0x1ffe0)
+                fid -= 0x1ffe0;
+            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                printf("IPIMB resynch has second fiducial 0x%x, now expecting 0x%x.\n",
+                       fid2, fid);
+                fflush(stdout);
+            }
+            in_sync = 2;
+            break;
+        case 2:
+            idx = -1;
+            status = evrTimeGetFifo(&evt_time, 140, &idx, 1);
+            if (fid == (evt_time.nsec & 0x1ffff)) {
+                in_sync = 3;
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB timestamps in sync!\n");
+                    fflush(stdout);
+                }
+            } else {
+                in_sync = 0;
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB resynch expected fiducial 0x%x, got 0x%x, retrying.\n", fid, evt_time.nsec & 0x1ffff);
+                    fflush(stdout);
+                }
+            }
+            break;
+        case 3:
+            last_status = status;
+            in_sync = 4;
+            break;
+        default:
+            break;
+        }
 
         /* Read the entire packet */
         cmd = COMMAND(rdbuf[0]);
@@ -246,7 +312,7 @@ void IpimBoard::do_read()
         }
         p = cmd ? _cmd[cbuf] : _data[dbuf];
         for (i = 0, j = 0; i < len; i++, j += 3) {
-            if (DEBUG & DEBUG_READER) {
+            if (IPIMB_BRD_DEBUG & DEBUG_READER) {
                 fprintf(stderr, "Ser R: 0x%02x 0x%02x 0x%02x --> 0x%04x\n", rdbuf[j+0], rdbuf[j+1], rdbuf[j+2],
                         (rdbuf[j+0] & 0xf) | ((rdbuf[j+1] & 0x3f)<<4) | ((rdbuf[j+2] & 0x3f)<<10));
             }
@@ -257,7 +323,7 @@ void IpimBoard::do_read()
             p[i] = (rdbuf[j] & 0xf) | ((rdbuf[j+1] & 0x3f)<<4) | ((rdbuf[j+2] & 0x3f)<<10);
         }
         if (i != len) {
-            if (DEBUG & (DEBUG_READER|DEBUG_SYNC)) {
+            if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_SYNC)) {
                 fprintf(stderr, "Skipping to next SOF.\n");
             }
             continue;
@@ -266,7 +332,7 @@ void IpimBoard::do_read()
         /* Check the CRC! */
         crc = CRC(p, len - 1);
         if (crc != p[len - 1]) {
-            if (DEBUG & (DEBUG_READER|DEBUG_SYNC|DEBUG_CRC)) {
+            if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_SYNC|DEBUG_CRC)) {
                 printf("data CRC check failed (got 0x%04x wanted 0x%04x)\n",
                        p[len - 1], crc);
             }
@@ -280,34 +346,41 @@ void IpimBoard::do_read()
             pthread_cond_signal(&cmdready); /* Wake up whoever did the write! */
             pthread_mutex_unlock(&mutex);
         } else {
-            if (DEBUG & (DEBUG_READER|DEBUG_DATA)) {
+            if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_DATA)) {
                 fprintf(stderr, "Got data packet in %d.\n", dbuf);
             }
             d = new (_data[dbuf]) IpimBoardData();
             current_cnt = d->triggerCounter();
             if (current_cnt != expected_cnt) {
-#if 0
-                printf("TC: expected %llx, have %llx\n", expected_cnt, current_cnt);
-                fflush(stdout);
-#endif
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB trigger count: expected 0x%llx, have 0x%llx.\n", expected_cnt, current_cnt);
+                    fflush(stdout);
+                }
                 incr = current_cnt - expected_cnt + 1;
-                if (incr < 0 || incr > 5) { /* We've lost it... this is gibberish */
-#if 0
-                    if (current_cnt != 1) {
+                if (incr <= 0 || incr > 5) { /* We've lost it... this is gibberish */
+                    if ((IPIMB_BRD_DEBUG & DEBUG_TC) && current_cnt != 1) {
                         printf("Resynchronizing IPIMB timestamps!\n");
                         fflush(stdout);
                     }
-#endif
-                    idx = -1;
-                    incr = 1;
+                    in_sync = 0;
                 }
             } else
                 incr = 1;
             expected_cnt = current_cnt + 1;
-            evrTimeGetFifo(&ts[dbuf], 140, &idx, incr);
-            dbuf = dbuf ? 0 : 1;
-            have_data = 1;
-            scanIoRequest(*_ioscan);         /* Let'em know we have data! */
+            /* If we're really in sync, get the time and deliver the data! */
+            if (in_sync == 4) {
+                status = evrTimeGetFifo(&ts[dbuf], 140, &idx, incr);
+                if (ts[0].nsec == ts[1].nsec && (ts[0].nsec & 0x1ffff) != 0x1ffff) {
+                    printf("%d: TS[0] = %08x.%08x, TS[1] = %08x.%08x, idx=%d, incr=%d, last_status=%d, status=%d!\n",
+                           _physID, ts[0].secPastEpoch, ts[0].nsec, ts[1].secPastEpoch, ts[1].nsec,
+                           idx, incr, last_status, status);
+                    fflush(stdout);
+                }
+                last_status = status;
+                dbuf = dbuf ? 0 : 1;
+                have_data = 1;
+                scanIoRequest(*_ioscan);         /* Let'em know we have data! */
+            }
         }
     }
 }
@@ -321,7 +394,7 @@ int IpimBoard::WriteCommand(unsigned short* cList)
         wrdata[3*i  ] = 0x90 | (data & 0xf) | (i == 0 ? 0x40 : 0) | (i == 3 ? 0x20 : 0);
         wrdata[3*i+1] = (data>>4) & 0x3f;
         wrdata[3*i+2] = 0x40 | ((data>>10) & 0x3f);
-        if (DEBUG & DEBUG_COMMAND) {
+        if (IPIMB_BRD_DEBUG & DEBUG_COMMAND) {
             printf("Out: 0x%04x %c%c%c\n", data,
                    (wrdata[3*i]&0x40) ? 'S' : ' ', (wrdata[3*i]&0x20) ? 'E' : ' ', (wrdata[3*i]&0x10) ? 'C' : ' ');
             printf("Ser W: 0x%02x 0x%02x 0x%02x\n", wrdata[3*i], wrdata[3*i+1], wrdata[3*i+2]);
@@ -387,7 +460,7 @@ unsigned IpimBoard::ReadRegister(unsigned regAddr)
         IpimBoardResponse resp = IpimBoardResponse(_cmd[cbuf ? 0 : 1]);
         if (resp.getAddr() == regAddr) {
             unsigned result = resp.getData();
-            if (DEBUG & DEBUG_REGISTER) {
+            if (IPIMB_BRD_DEBUG & DEBUG_REGISTER) {
                 printf("ReadRegister(%s) --> 0x%x (%d)\n", REGNAME(regAddr), result, result);
             }
             pthread_mutex_unlock(&mutex);
@@ -407,7 +480,7 @@ void IpimBoard::WriteRegister(unsigned regAddr, unsigned regValue)
     WriteCommand(cmd.getAll());
     struct timespec req = {0, 5000000}; // 5 ms
     nanosleep(&req, NULL);
-    if (DEBUG & DEBUG_REGISTER) {
+    if (IPIMB_BRD_DEBUG & DEBUG_REGISTER) {
         printf("WriteRegister(%s, 0x%x) done.\n", REGNAME(regAddr), regValue);
     }
 }

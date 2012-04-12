@@ -130,7 +130,7 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     }
 
     // TODO: mdestIP needs to check and convert and setup
-    pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP);
+    pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID);
 
     /* Add to the device linked list */
     epicsMutexLock(IPIMB_device_list_lock);

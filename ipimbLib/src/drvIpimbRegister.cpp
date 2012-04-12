@@ -14,6 +14,7 @@ extern "C" {
 
 int IPIMB_DRV_DEBUG=0;
 int IPIMB_DEV_DEBUG=0;
+int IPIMB_BRD_DEBUG=0;
 
 static const iocshArg IPIMB_DRV_DEBUGArg0 = {"value", iocshArgInt};
 static const iocshArg *const IPIMB_DRV_DEBUGArgs[1] = {&IPIMB_DRV_DEBUGArg0};
@@ -27,6 +28,13 @@ static const iocshArg *const IPIMB_DEV_DEBUGArgs[1] = {&IPIMB_DEV_DEBUGArg0};
 static const iocshFuncDef IPIMB_DEV_DEBUGDef = {"IPIMB_DEV_DEBUG", 1, IPIMB_DEV_DEBUGArgs};
 static void IPIMB_DEV_DEBUGCall(const iocshArgBuf * args) {
         IPIMB_DEV_DEBUG = args[0].ival;
+}
+
+static const iocshArg IPIMB_BRD_DEBUGArg0 = {"value", iocshArgInt};
+static const iocshArg *const IPIMB_BRD_DEBUGArgs[1] = {&IPIMB_BRD_DEBUGArg0};
+static const iocshFuncDef IPIMB_BRD_DEBUGDef = {"IPIMB_BRD_DEBUG", 1, IPIMB_BRD_DEBUGArgs};
+static void IPIMB_BRD_DEBUGCall(const iocshArgBuf * args) {
+        IPIMB_BRD_DEBUG = args[0].ival;
 }
 
 static const iocshArg ipimbAddArg0 = {"name", iocshArgString};
@@ -49,6 +57,7 @@ void drvIPIMB_Register() {
         firstTime = 0;
         iocshRegister(&IPIMB_DRV_DEBUGDef, IPIMB_DRV_DEBUGCall);
         iocshRegister(&IPIMB_DEV_DEBUGDef, IPIMB_DEV_DEBUGCall);
+        iocshRegister(&IPIMB_BRD_DEBUGDef, IPIMB_BRD_DEBUGCall);
         iocshRegister(&ipimbAddDef, ipimbAddCall);
 }
 #ifdef __cplusplus

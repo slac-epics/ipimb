@@ -145,7 +145,7 @@ namespace Pds {
             vhdl_version        = 0x17
         };
 
-        IpimBoard(char* serialDevice, IOSCANPVT *ioscan);
+        IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID);
         ~IpimBoard();
 
         int get_fd();
@@ -182,6 +182,7 @@ namespace Pds {
         void SetAdcDelay(uint32_t adcDelay);
     
     private:
+        int   _physID;               // Physical ID
         int   _fd;                   // File descriptor
         char* _serialDevice;         // Name of serial port
         IOSCANPVT *_ioscan;
