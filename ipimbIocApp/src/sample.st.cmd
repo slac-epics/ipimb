@@ -37,8 +37,8 @@ ipimbIoc_registerRecordDeviceDriver(pdbbase)
 
 ErDebugLevel( 0 )
 
-# Datatype is Id_SharedIpimb (35)
-ipimbAdd("$(IPIMBNAME)", "$(IPIMBPORT)", "239.255.24.$(IPIMBPHID)", $(IPIMBPHID), 35)
+# Datatype is Id_SharedIpimb (35), Version 1, so 65536+35 = 65571
+ipimbAdd("$(IPIMBNAME)", "$(IPIMBPORT)", "239.255.24.$(IPIMBPHID)", $(IPIMBPHID), 65571)
 
 # Initialize PMC EVR
 ErConfigure( 0, 0, 0, 0, $(EVRTYPE) )
@@ -68,7 +68,7 @@ create_monitor_set( "$(IOCNAME).req", 5, "IOC=$(IOCBASE)" )
 # BldConfig sAddr uPort uMaxDataSize sInterfaceIp uSrcPyhsicalId iDataType sBldPvTrigger sBldPvFiducial sBldPvList
 # EVENT14CNT is EVR event 140
 BldSetID(0)
-BldConfig( "239.255.24.$(IPIMBPHID)", 10148, 512, 0, $(IPIMBPHID), 35, "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):YPOS", "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):CH0_RAW.INP,$(IPIMBBASE):CH0,$(IPIMBBASE):CH1,$(IPIMBBASE):CH2,$(IPIMBBASE):CH3,$(IPIMBBASE):SUM,$(IPIMBBASE):XPOS,$(IPIMBBASE):YPOS" )
+BldConfig( "239.255.24.$(IPIMBPHID)", 10148, 512, 0, $(IPIMBPHID), 65571, "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):YPOS", "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):CH0_RAW.INP,$(IPIMBBASE):CH0,$(IPIMBBASE):CH1,$(IPIMBBASE):CH2,$(IPIMBBASE):CH3,$(IPIMBBASE):SUM,$(IPIMBBASE):XPOS,$(IPIMBBASE):YPOS" )
 BldSetDebugLevel(1)
 # Uncomment the next line for BLD generation.
 # BldStart()
