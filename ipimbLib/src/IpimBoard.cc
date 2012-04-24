@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 
 #define BAD_VALUE 0xfadefade
 
@@ -148,7 +149,7 @@ static void *ipimb_thread_body(void *p)
     return NULL;
 }
 
-IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID)
+IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, int* trigger)
 {
     size_t stacksize;
     struct termios newtio;
@@ -157,6 +158,7 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID)
     _physID = physID;
     _serialDevice = strdup(serialDevice);
     _ioscan = ioscan;
+    _trigger = trigger;
 
     memset(&newtio, 0, sizeof(newtio));
         
@@ -210,6 +212,15 @@ void IpimBoard::flush()
     tcflush(_fd, TCIOFLUSH);
 }
 
+int IpimBoard::qlen() 
+{
+    int len;
+    if (ioctl(_fd, FIONREAD, &len))
+        return -1;
+    else
+        return len;
+}
+
 void IpimBoard::do_read()
 {
     int rd, len, blen, i, j, cmd;
@@ -222,7 +233,14 @@ void IpimBoard::do_read()
     epicsTimeStamp evt_time;
     IpimBoardData *d;
     int status = 0, last_status = 0;
-
+    int trigevent = *_trigger;
+    int eventvalid = trigevent > 0 && trigevent < 256;
+    
+    if (eventvalid)
+        printf("%d: Setting event trigger to %d\n", _physID, trigevent);
+    else
+        printf("%d: Event trigger %d is invalid!\n", trigevent);
+    
     for (;;) {
         rd = read(_fd, rdbuf, 1);
         if (rd <= 0 || !SOFR(rdbuf[0])) { /* Skip until we are in sync.  Do we ever want to quit?!? */
@@ -237,10 +255,29 @@ void IpimBoard::do_read()
          * We want to see three EVR triggers in a row with good times.
          * Then, we'll believe the fifo moving forward.
          */
+        if (!eventvalid || trigevent != *_trigger) {
+            /* Our trigger is not valid, or it changed.  Force a resync! */
+            trigevent = *_trigger;
+            if (eventvalid) {
+                eventvalid = trigevent > 0 && trigevent < 256;
+                if (eventvalid)
+                    printf("%d: Setting event trigger to %d\n", _physID, trigevent);
+                else
+                    printf("%d: Event trigger %d is invalid!\n", trigevent);
+            } else {
+                eventvalid = trigevent > 0 && trigevent < 256;
+                if (eventvalid)
+                    printf("%d: Setting event trigger to %d\n", _physID, trigevent);
+                /* else no need to spam if it's *still* invalid! */
+            }
+            in_sync = 0;
+        }
         switch (in_sync) {
         case 0:
             idx = -1;
-            status = evrTimeGetFifo(&evt_time, 140, &idx, 1);
+            /* If we don't have a valid event, we can't time anything anyway. */
+            if (eventvalid)
+                status = evrTimeGetFifo(&evt_time, trigevent, &idx, 1);
             fid = evt_time.nsec & 0x1ffff;
             if (IPIMB_BRD_DEBUG & DEBUG_TC) {
                 printf("IPIMB resynch has initial fiducial 0x%x.\n", fid);
@@ -251,7 +288,7 @@ void IpimBoard::do_read()
             break;
         case 1:
             idx = -1;
-            status = evrTimeGetFifo(&evt_time, 140, &idx, 1);
+            status = evrTimeGetFifo(&evt_time, trigevent, &idx, 1);
             fid2 = evt_time.nsec & 0x1ffff;
             if (fid2 == 0x1ffff) {
                 if (IPIMB_BRD_DEBUG & DEBUG_TC) {
@@ -273,7 +310,7 @@ void IpimBoard::do_read()
             break;
         case 2:
             idx = -1;
-            status = evrTimeGetFifo(&evt_time, 140, &idx, 1);
+            status = evrTimeGetFifo(&evt_time, trigevent, &idx, 1);
             if (fid == (evt_time.nsec & 0x1ffff)) {
                 in_sync = 3;
                 if (IPIMB_BRD_DEBUG & DEBUG_TC) {
@@ -353,7 +390,7 @@ void IpimBoard::do_read()
             current_cnt = d->triggerCounter();
             if (current_cnt != expected_cnt) {
                 if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                    printf("IPIMB trigger count: expected 0x%llx, have 0x%llx.\n", expected_cnt, current_cnt);
+                    printf("IPIMB trigger count: expected 0x%ullx, have 0x%ullx.\n", expected_cnt, current_cnt);
                     fflush(stdout);
                 }
                 incr = current_cnt - expected_cnt + 1;
@@ -369,7 +406,7 @@ void IpimBoard::do_read()
             expected_cnt = current_cnt + 1;
             /* If we're really in sync, get the time and deliver the data! */
             if (in_sync == 4) {
-                status = evrTimeGetFifo(&ts[dbuf], 140, &idx, incr);
+                status = evrTimeGetFifo(&ts[dbuf], trigevent, &idx, incr);
                 if (ts[0].nsec == ts[1].nsec && (ts[0].nsec & 0x1ffff) != 0x1ffff) {
                     printf("%d: TS[0] = %08x.%08x, TS[1] = %08x.%08x, idx=%d, incr=%d, last_status=%d, status=%d!\n",
                            _physID, ts[0].secPastEpoch, ts[0].nsec, ts[1].secPastEpoch, ts[1].nsec,

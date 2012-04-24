@@ -20,7 +20,12 @@ epicsEnvSet("IPIMBNAME", "HXX-UM6-PIM-01")
 epicsEnvSet("IPIMBPORT", "/dev/ttyPS0")
 epicsEnvSet("IPIMBPHID", "4")
 epicsEnvSet("TRIGGER", "0")
+epicsEnvSet("TRIGNAME", "$(EVRBASE):Triggers.A")
 epicsEnvSet("EVRTYPE", "1")
+epicsEnvSet("FP0L", "$(IPIMBBASE)"
+epicsEnvSet("FP1L", "")
+epicsEnvSet("FP2L", "")
+epicsEnvSet("FP3L", "")
 #############################################################
 epicsEnvSet( "ENGINEER", "Michael Browne (mcbrowne)" )
 epicsEnvSet( "LOCATION", "$(IOCBASE)" )
@@ -37,14 +42,16 @@ ipimbIoc_registerRecordDeviceDriver(pdbbase)
 
 ErDebugLevel( 0 )
 
-# Datatype is Id_SharedIpimb (35), Version 1, so 65536+35 = 65571
-ipimbAdd("$(IPIMBNAME)", "$(IPIMBPORT)", "239.255.24.$(IPIMBPHID)", $(IPIMBPHID), 65571)
-
 # Initialize PMC EVR
 ErConfigure( 0, 0, 0, 0, $(EVRTYPE) )
 
-# Load record instances
+# Load EVR record instances
 dbLoadRecords( "db/evr-ipimb.db", "IOC=$(IOCBASE),EVR=$(EVRBASE)" )
+
+# Datatype is Id_SharedIpimb (35), Version 1, so 65536+35 = 65571
+ipimbAdd("$(IPIMBNAME)", "$(IPIMBPORT)", "239.255.24.$(IPIMBPHID)", $(IPIMBPHID), 65571, $(TRIGNAME))
+
+# Load remaining record instances
 dbLoadRecords( "db/ipimb_iocAdmin.db",		"IOC=$(IOCBASE)" )
 dbLoadRecords( "db/save_restoreStatus.db",	"IOC=$(IOCBASE)" )
 dbLoadRecords( "db/bldSettings.db",             "IOC=$(IOCBASE),BLDNO=0" )
@@ -78,10 +85,11 @@ BldShowConfig()
 dbpf $(IPIMBBASE):DoConfig 1
 epicsThreadSleep(1)
 
-# Turn on the EVR trigger.
-dbpf $(EVRBASE):CTRL.DG$(TRIGGER)E Enabled
-dbpf $(EVRBASE):EVENT14CTRL.OUT0 Enabled
-dbpf $(EVRBASE):EVENT14CTRL.VME Enabled
+# Fix up the EVR descriptions!
+dbpf $(EVRBASE):FP0L.DESC "$(FP0L)"
+dbpf $(EVRBASE):FP1L.DESC "$(FP1L)"
+dbpf $(EVRBASE):FP1L.DESC "$(FP2L)"
+dbpf $(EVRBASE):FP1L.DESC "$(FP3L)"
 
 # All IOCs should dump some common info after initial startup.
 < /reg/d/iocCommon/All/post_linux.cmd

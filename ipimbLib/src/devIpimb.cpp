@@ -168,6 +168,7 @@ long read_ai(struct aiRecord *pai)
         if (ipmData) {
             switch(pdevdata->chnlnum) {
             case 0:
+                memcpy(&pdevdata->pdevice->ipmData, ipmData, sizeof(IpimBoardData)); // Remember this!
                 pai->rval = ipmData->ch0;
                 break;
             case 1:

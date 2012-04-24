@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <dbAccess.h>
 #include "drvIpimb.h"
 
 #ifdef  __cplusplus
@@ -105,9 +106,12 @@ static int ipimbSetPv(int iPvIndex, void* pPvValue, void* payload)
     return 0;
 }
 
-int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype)
+int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype,
+                  char *trigger)
 {
     IPIMB_DEVICE  * pdevice = NULL;
+    DBADDR trigaddr;
+    static int ev140 = 140;
 
     if(!IPIMB_device_list_inited)
     {
@@ -130,7 +134,11 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     }
 
     // TODO: mdestIP needs to check and convert and setup
-    pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID);
+    if (dbNameToAddr(trigger, &trigaddr)) {
+        printf("No PV trigger named %s, using constant event 140!\n", trigger);
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, (int *) &ev140 );
+    } else
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, (int *) trigaddr.pfield);
 
     /* Add to the device linked list */
     epicsMutexLock(IPIMB_device_list_lock);
