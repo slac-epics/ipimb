@@ -239,7 +239,7 @@ void IpimBoard::do_read()
     if (eventvalid)
         printf("%d: Setting event trigger to %d\n", _physID, trigevent);
     else
-        printf("%d: Event trigger %d is invalid!\n", trigevent);
+        printf("%d: Event trigger %d is invalid!\n", _physID, trigevent);
     
     for (;;) {
         rd = read(_fd, rdbuf, 1);
@@ -263,7 +263,7 @@ void IpimBoard::do_read()
                 if (eventvalid)
                     printf("%d: Setting event trigger to %d\n", _physID, trigevent);
                 else
-                    printf("%d: Event trigger %d is invalid!\n", trigevent);
+                    printf("%d: Event trigger %d is invalid!\n", _physID, trigevent);
             } else {
                 eventvalid = trigevent > 0 && trigevent < 256;
                 if (eventvalid)
@@ -276,9 +276,11 @@ void IpimBoard::do_read()
         case 0:
             idx = -1;
             /* If we don't have a valid event, we can't time anything anyway. */
-            if (eventvalid)
+            if (eventvalid) {
                 status = evrTimeGetFifo(&evt_time, trigevent, &idx, 1);
-            fid = evt_time.nsec & 0x1ffff;
+                fid = evt_time.nsec & 0x1ffff;
+            } else
+                fid = 0x1ffff;
             if (IPIMB_BRD_DEBUG & DEBUG_TC) {
                 printf("IPIMB resynch has initial fiducial 0x%x.\n", fid);
                 fflush(stdout);
