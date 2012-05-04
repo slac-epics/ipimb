@@ -149,7 +149,8 @@ static void *ipimb_thread_body(void *p)
     return NULL;
 }
 
-IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, int* trigger)
+IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned long* trigger,
+                     unsigned long *gen)
 {
     size_t stacksize;
     struct termios newtio;
@@ -159,6 +160,7 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, int* tri
     _serialDevice = strdup(serialDevice);
     _ioscan = ioscan;
     _trigger = trigger;
+    _gen = gen;
 
     memset(&newtio, 0, sizeof(newtio));
         
@@ -209,7 +211,10 @@ int IpimBoard::get_fd()
 
 void IpimBoard::flush() 
 {
-    tcflush(_fd, TCIOFLUSH);
+    if (tcflush(_fd, TCIOFLUSH)) {
+        printf("IPIMB%d cannot flush!!!\n", _physID);
+        fflush(stdout);
+    }
 }
 
 int IpimBoard::qlen() 
@@ -221,6 +226,18 @@ int IpimBoard::qlen()
         return len;
 }
 
+#define FID_MAX      0x1ffe0
+#define ROLLOVER_LO  0x00200
+#define ROLLOVER_HI  (FID_MAX-ROLLOVER_LO)
+
+#define FID_GT(a,b) (((a) < ROLLOVER_LO && (b) > ROLLOVER_HI) ||        \
+                     ((a) > (b) && ((a) <= ROLLOVER_HI || (b) >= ROLLOVER_LO)))
+#define FID_DIFF(a,b) (((a) < ROLLOVER_LO && (b) > ROLLOVER_HI)         \
+                       ? (0x1ffe0 + (a) - (b))                          \
+                       : (((b) < ROLLOVER_LO && (a) > ROLLOVER_HI)      \
+                          ? ((a) - (b) - 0x1ffe0)                       \
+                          : ((a) - (b))))
+
 void IpimBoard::do_read()
 {
     int rd, len, blen, i, j, cmd;
@@ -228,18 +245,19 @@ void IpimBoard::do_read()
     unsigned crc;
     unsigned char rdbuf[3 * DataPackets];
     uint64_t expected_cnt = 1, current_cnt;
-    int idx = -1, incr = 1, in_sync = 0;
-    unsigned fid = 0x1ffff, fid2;
+    unsigned int idx = -1;
+    int incr = 1, in_sync = 0;
     epicsTimeStamp evt_time;
-    IpimBoardData *d;
-    int status = 0, last_status = 0;
+    int status = 0;
     int trigevent = *_trigger;
+    unsigned int gen = *_gen;
     int eventvalid = trigevent > 0 && trigevent < 256;
+    int do_print = 0;
     
     if (eventvalid)
-        printf("%d: Setting event trigger to %d\n", _physID, trigevent);
+        printf("IPIMB@%d: Setting event trigger to %d\n", _physID, trigevent);
     else
-        printf("%d: Event trigger %d is invalid!\n", _physID, trigevent);
+        printf("IPIMB@%d: Event trigger %d is invalid!\n", _physID, trigevent);
     
     for (;;) {
         rd = read(_fd, rdbuf, 1);
@@ -251,88 +269,179 @@ void IpimBoard::do_read()
             continue;
         }
 
-        /*
-         * We want to see three EVR triggers in a row with good times.
-         * Then, we'll believe the fifo moving forward.
-         */
-        if (!eventvalid || trigevent != *_trigger) {
-            /* Our trigger is not valid, or it changed.  Force a resync! */
+        if (gen != *_gen) {
+            /* The trigger event changed, so print a message and force a resync! */
             trigevent = *_trigger;
-            if (eventvalid) {
-                eventvalid = trigevent > 0 && trigevent < 256;
-                if (eventvalid)
-                    printf("%d: Setting event trigger to %d\n", _physID, trigevent);
-                else
-                    printf("%d: Event trigger %d is invalid!\n", _physID, trigevent);
-            } else {
-                eventvalid = trigevent > 0 && trigevent < 256;
-                if (eventvalid)
-                    printf("%d: Setting event trigger to %d\n", _physID, trigevent);
-                /* else no need to spam if it's *still* invalid! */
-            }
+            gen = *_gen;
             in_sync = 0;
-        }
-        switch (in_sync) {
-        case 0:
-            idx = -1;
-            /* If we don't have a valid event, we can't time anything anyway. */
+
             if (eventvalid) {
-                status = evrTimeGetFifo(&evt_time, trigevent, &idx, 1);
-                fid = evt_time.nsec & 0x1ffff;
-            } else
-                fid = 0x1ffff;
-            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                printf("IPIMB resynch has initial fiducial 0x%x.\n", fid);
-                fflush(stdout);
-            }
-            if (fid != 0x1ffff)
-                in_sync = 1;
-            break;
-        case 1:
-            idx = -1;
-            status = evrTimeGetFifo(&evt_time, trigevent, &idx, 1);
-            fid2 = evt_time.nsec & 0x1ffff;
-            if (fid2 == 0x1ffff) {
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                    printf("IPIMB resynch received invalid fiducial, retrying.\n");
-                    fflush(stdout);
-                }
-                in_sync = 0;
-                break;
-            }
-            fid = (0x20000 + 2 * fid2 - fid) & 0x1ffff;
-            if (fid > 0x1ffe0)
-                fid -= 0x1ffe0;
-            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                printf("IPIMB resynch has second fiducial 0x%x, now expecting 0x%x.\n",
-                       fid2, fid);
-                fflush(stdout);
-            }
-            in_sync = 2;
-            break;
-        case 2:
-            idx = -1;
-            status = evrTimeGetFifo(&evt_time, trigevent, &idx, 1);
-            if (fid == (evt_time.nsec & 0x1ffff)) {
-                in_sync = 3;
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                    printf("IPIMB timestamps in sync!\n");
-                    fflush(stdout);
-                }
+                eventvalid = trigevent > 0 && trigevent < 256;
+                if (eventvalid)
+                    printf("IPIMB@%d: Setting event trigger to %d\n", _physID, trigevent);
+                else
+                    printf("IPIMB@%d: Event trigger %d is invalid!\n", _physID, trigevent);
             } else {
-                in_sync = 0;
+                eventvalid = trigevent > 0 && trigevent < 256;
+                if (eventvalid)
+                    printf("IPIMB@%d: Setting event trigger to %d\n", _physID, trigevent);
+            }
+        }
+
+        /*
+         * At this point, we have one byte of a packet.
+         *
+         * If we are in sync, then we just go process it.
+         *
+         * If we are not in_sync and the event isn't valid, we can also go process it, because
+         * either it's data (which we'll drop), or it's a command response (which we need to
+         * send back).
+         *
+         * If we are not in sync and the event is valid, we need to get into sync, so:
+         *     - We drop what we have (incrementing expected_cnt if it's data).
+         *     - We wait for the next data to arrive and get the time from lastfid.
+         *     - We get the current time.  This should be shortly before the lastfid time.  If
+         *       not, adjust backwards or wait, accordingly!
+         *
+         * If the user tries to reconfigure or if we receive a bad fiducial, we just flush and
+         * start over.
+         */
+        if (!in_sync && eventvalid) {
+            int savefid, newfid, cnt;
+
+            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                printf("IPIMB%d resynchronizing at actual fiducial 0x%x.\n",
+                       _physID, lastfid);
+                fflush(stdout);
+            }
+
+            /* Get rid of our current packet! */
+            flush();
+            if (!COMMAND(rdbuf[0])) {
                 if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                    printf("IPIMB resynch expected fiducial 0x%x, got 0x%x, retrying.\n", fid, evt_time.nsec & 0x1ffff);
+                    printf("IPIMB%d is flushing expected data packet %lld.\n",
+                           _physID, expected_cnt);
+                    fflush(stdout);
+                }
+                expected_cnt++;
+            }
+
+            /* Wait for either a reconfigure or something new to appear in the queue */
+            for (cnt = 1; cnt < 5000; cnt++) {
+                struct timespec req = {0, 1000000}; /* 1 ms */
+                nanosleep(&req, NULL);
+                if (qlen() || gen != *_gen)
+                    break;
+            }
+            if (cnt == 5000 || gen != *_gen) {
+                /* This is just bad.  Flush and hope for better the next time we're here. */
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB%d resync failed, restarting!\n", _physID);
+                    fflush(stdout);
+                }
+                flush();
+                continue;
+            }
+            /*
+             * lastfid is saved in the event interrupt handler.  It is probably the
+             * most accurate timestamp we have.  It should be "close" to the trigger
+             * timestamp.
+             */
+            savefid = lastfid; 
+
+            /* Get the current time! */
+            status = evrTimeGetFifo(&evt_time, trigevent, &idx, MAX_TS_QUEUE);
+            newfid = evt_time.nsec & 0x1ffff;
+            if (newfid == 0x1ffff) {
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB%d: Bad fiducial at time %08x:%08x!\n", _physID,
+                           evt_time.secPastEpoch, evt_time.nsec);
+                    fflush(stdout);
+                }
+                continue;
+            }
+
+            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                printf("IPIMB%d resync sees timestamp fiducial 0x%x at actual fiducial 0x%x.\n",
+                       _physID, newfid, savefid);
+                fflush(stdout);
+            }
+
+            if (FID_GT(newfid, savefid)) {
+                /*
+                 * The timestamp is more recent than the most recent fiducial?!?
+                 *
+                 * We must have prematurely rotated the timestamp buffers.  As long
+                 * as we are close, nothing is seriously wrong here.
+                 */
+                if (FID_DIFF(newfid, savefid) > 2) {
+                    printf("IPIMB%d is looking into the distant future?!?\n", _physID);
+                    fflush(stdout);
+                    /*
+                     * I'd write code to fix this, but we should never be
+                     * here in the first place!
+                     */
+                    flush();
+                    continue;
+                }
+
+                /*
+                 * Go back one fiducial.
+                 */
+                status = evrTimeGetFifo(&evt_time, trigevent, &idx, -1);
+                newfid = evt_time.nsec & 0x1ffff;
+                if (newfid == 0x1ffff) {
+                    if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                        printf("IPIMB%d resync sees a bad fiducial, restarting!\n", _physID);
+                        fflush(stdout);
+                    }
+                    flush();
+                    continue;
+                }
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB%d is moving back to timestamp fiducial 0x%x at index %d.\n",
+                           _physID, newfid, idx);
                     fflush(stdout);
                 }
             }
-            break;
-        case 3:
-            last_status = status;
-            in_sync = 4;
-            break;
-        default:
-            break;
+            /*
+             * Our trigger was close to savefid, but the timestamps have not been rotated
+             * yet.  Wait for them to rotate until we get something close!
+             */
+            while (FID_DIFF(savefid, newfid) > 2) {
+                unsigned int idx2;
+                do
+                    status = evrTimeGetFifo(&evt_time, trigevent, &idx2, MAX_TS_QUEUE);
+                while (idx == idx2 || gen != *_gen);
+                idx = idx2;
+                newfid = evt_time.nsec & 0x1ffff;
+                if (gen != *_gen || newfid == 0x1ffff)
+                    break;
+            }
+            if (gen != *_gen || newfid == 0x1ffff) {
+                /* This is just bad.  Flush and hope for better the next time we're here. */
+                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    printf("IPIMB%d resync failed with fiducial 0x%x, restarting!\n",
+                           _physID, (evt_time.nsec & 0x1ffff));
+                    fflush(stdout);
+                }
+                flush();
+                continue;
+            }
+            /*
+             * We should probably check that we are, indeed, close.  What if newfid skipped
+             * *past* our real fiducial?  (Unlikely, I know.)
+             */
+            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                printf("IPIMB%d resync established with index %d at timestamp fiducial 0x%x at actual fiducial 0x%x.\n",
+                       _physID, idx, newfid, savefid);
+                fflush(stdout);
+            }
+            in_sync++;
+            expected_cnt++;
+            flush();
+            do_print = 1; /* Talk the next time through the loop! */
+            continue;
         }
 
         /* Read the entire packet */
@@ -382,23 +491,28 @@ void IpimBoard::do_read()
         if (cmd) {
             pthread_mutex_lock(&mutex);
             cbuf = cbuf ? 0 : 1;
-            pthread_cond_signal(&cmdready); /* Wake up whoever did the write! */
+            pthread_cond_signal(&cmdready); /* Wake up whoever did the read! */
             pthread_mutex_unlock(&mutex);
         } else {
+            IpimBoardData *d = new (_data[dbuf]) IpimBoardData();
+
             if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_DATA)) {
                 fprintf(stderr, "Got data packet in %d.\n", dbuf);
             }
-            d = new (_data[dbuf]) IpimBoardData();
+
+            /* Check if this is the next expected data packet. */
             current_cnt = d->triggerCounter();
             if (current_cnt != expected_cnt) {
                 if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                    printf("IPIMB trigger count: expected 0x%ullx, have 0x%ullx.\n", expected_cnt, current_cnt);
+                    printf("IPIMB%d trigger count: expected 0x%llx, have 0x%llx.\n", 
+                           _physID, expected_cnt, current_cnt);
                     fflush(stdout);
                 }
                 incr = current_cnt - expected_cnt + 1;
-                if (incr <= 0 || incr > 5) { /* We've lost it... this is gibberish */
+                if (incr <= 0 || incr > 5) {
+                    /* If we are too far off, just start over! */
                     if ((IPIMB_BRD_DEBUG & DEBUG_TC) && current_cnt != 1) {
-                        printf("Resynchronizing IPIMB timestamps!\n");
+                        printf("IPIMB%d: resynchronizing timestamps!\n", _physID);
                         fflush(stdout);
                     }
                     in_sync = 0;
@@ -406,16 +520,37 @@ void IpimBoard::do_read()
             } else
                 incr = 1;
             expected_cnt = current_cnt + 1;
+
             /* If we're really in sync, get the time and deliver the data! */
-            if (in_sync == 4) {
+            if (in_sync) {
                 status = evrTimeGetFifo(&ts[dbuf], trigevent, &idx, incr);
+                if (do_print) {
+                    unsigned int newfid = ts[dbuf].nsec & 0x1ffff;
+                    if (newfid == 0x1ffff) {
+                        if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                            printf("IPIMB%d has a bad fiducial (lastfid = 0x%x), resynching!\n",
+                                   _physID, lastfid);
+                            fflush(stdout);
+                        }
+                        in_sync = 0;
+                    } else {
+                        if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                            printf("IPIMB%d is fully resynched with index %d at fiducial 0x%x (lastfid = 0x%x), current packet=%lld.\n",
+                                   _physID, idx, ts[dbuf].nsec & 0x1ffff, lastfid, current_cnt);
+                            fflush(stdout);
+                        }
+                    }
+                    do_print = 0;
+                }
+            }
+
+            if (in_sync) {
                 if (ts[0].nsec == ts[1].nsec && (ts[0].nsec & 0x1ffff) != 0x1ffff) {
-                    printf("%d: TS[0] = %08x.%08x, TS[1] = %08x.%08x, idx=%d, incr=%d, last_status=%d, status=%d!\n",
+                    printf("IPIMB@%d: TS[0] = %08x.%08x, TS[1] = %08x.%08x, idx=%d, incr=%d, status=%d!\n",
                            _physID, ts[0].secPastEpoch, ts[0].nsec, ts[1].secPastEpoch, ts[1].nsec,
-                           idx, incr, last_status, status);
+                           idx, incr, status);
                     fflush(stdout);
                 }
-                last_status = status;
                 dbuf = dbuf ? 0 : 1;
                 have_data = 1;
                 scanIoRequest(*_ioscan);         /* Let'em know we have data! */

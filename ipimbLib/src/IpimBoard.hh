@@ -145,7 +145,8 @@ namespace Pds {
             vhdl_version        = 0x17
         };
 
-        IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, int *trigger);
+        IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned long *trigger,
+                  unsigned long *gen);
         ~IpimBoard();
 
         int get_fd();
@@ -186,7 +187,8 @@ namespace Pds {
         int   _physID;               // Physical ID
         int   _fd;                   // File descriptor
         char* _serialDevice;         // Name of serial port
-        int*  _trigger;              // PV with event number of trigger
+        unsigned long*  _trigger;    // PV with event number of trigger
+        unsigned long*  _gen;        // PV with generation number of trigger
         IOSCANPVT *_ioscan;
         bool  config_ok;
         

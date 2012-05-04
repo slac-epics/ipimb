@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <dbAccess.h>
+#include <longSubRecord.h>
 #include "drvIpimb.h"
 
 #ifdef  __cplusplus
@@ -111,7 +112,7 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
 {
     IPIMB_DEVICE  * pdevice = NULL;
     DBADDR trigaddr;
-    static int ev140 = 140;
+    static unsigned long ev140 = 140;
 
     if(!IPIMB_device_list_inited)
     {
@@ -136,9 +137,11 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     // TODO: mdestIP needs to check and convert and setup
     if (dbNameToAddr(trigger, &trigaddr)) {
         printf("No PV trigger named %s, using constant event 140!\n", trigger);
-        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, (int *) &ev140 );
-    } else
-        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, (int *) trigaddr.pfield);
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140);
+    } else {
+        unsigned long *trig = (unsigned long *) trigaddr.pfield;
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, trig, trig + 4);
+    }
 
     /* Add to the device linked list */
     epicsMutexLock(IPIMB_device_list_lock);

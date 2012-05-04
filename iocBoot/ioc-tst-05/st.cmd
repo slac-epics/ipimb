@@ -1,22 +1,36 @@
 #!../../bin/linux-x86/ipimbIoc
 
-## ToDo: The following substitutions can be done via makeBaseApp.pl
-## If they weren't, do them before releasing your IOC
-##
-## Replace _ USER _ with your userid
-##
-## Replace _ APPNAME _ with the name of the application
-##
-## Replace _ IOC _ with the network name of the IOC
-##
-## Replace _ IOCPVROOT _ with the PV prefix used for
-## iocAdmin PV's on this IOC
-## ex. AMO:R15:IOC:23
-##
-
+# This is a sample st.cmd file for the IPIMB IOC.
+# It currently supports one IPIMB, but is easily extensible to many.
+# The following variables need to be defined:
+#     IOCNAME   - The name of the IOC.
+#     IOCBASE   - The basename of most of the IOCs PVs.
+#     EVRBASE   - The basename of the EVR-specific PVs.
+#     IPIMBBASE - The basename of the IPIMB-specific PVs.
+#     IPIMBNAME - The name of the IPIMB.
+#     IPIMBPORT - The name of the IPIMB serial port.
+#     IPIMBPHID - The physical ID of the IPIMB (for BLD generation).
+#     TRIGGER   - The EVR trigger used (0-3)
+#     EVRTYPE   - The type of EVR (1 = MRF, 15 = SLAC)
+epicsEnvSet("IOCNAME", "ioc-tst-05")
+epicsEnvSet("IOCBASE", "TST:R01:IOC:22")
+epicsEnvSet("EVRBASE", "TST:R01:EVR:22")
+epicsEnvSet("IPIMBBASE", "TST:R01:PIM:01")
+epicsEnvSet("IPIMBNAME", "TST-R01-PIM-01")
+epicsEnvSet("IPIMBPORT", "/dev/ttyPS0")
+# Bogus Physical ID!
+epicsEnvSet("IPIMBPHID", "40")
+epicsEnvSet("TRIGGER", "0")
+epicsEnvSet("TRIGNAME", "$(EVRBASE):Triggers.A")
+epicsEnvSet("EVRTYPE", "1")
+epicsEnvSet("FP0L", "$(IPIMBBASE)")
+epicsEnvSet("FP1L", "")
+epicsEnvSet("FP2L", "")
+epicsEnvSet("FP3L", "")
+#############################################################
 epicsEnvSet( "ENGINEER", "Michael Browne (mcbrowne)" )
-epicsEnvSet( "LOCATION", "TST:R01:IOC:22" )
-epicsEnvSet( "IOCSH_PS1", "ioc-tst-05> " )
+epicsEnvSet( "LOCATION", "$(IOCBASE)" )
+epicsEnvSet( "IOCSH_PS1", "$(IOCNAME)> " )
 < envPaths
 cd( "../.." )
 
@@ -29,52 +43,52 @@ ipimbIoc_registerRecordDeviceDriver(pdbbase)
 
 ErDebugLevel( 0 )
 
-# Call it physical id 40 (bogus!) with datatype Id_SharedIpimb (35)
-ipimbAdd("TST-R01-PIM-01", "/dev/ttyPS0", "239.255.24.40", 40, 35)
-
 # Initialize PMC EVR
-# Params: #, address, irqvector, irqlevel, formfactor.
-# The only one interesting here is the last: 0=cPCI, 1=PMC, 2=VME, 15=SLAC
-ErConfigure( 0, 0, 0, 0, 1 )
+ErConfigure( 0, 0, 0, 0, $(EVRTYPE) )
 
-# Load record instances
-dbLoadRecords( "db/evr-ipimb.db",		"IOC=TST:R01:IOC:22,EVR=TST:R01:EVR:22" )
-dbLoadRecords( "db/ipimb_iocAdmin.db",		"IOC=TST:R01:IOC:22" )
-dbLoadRecords( "db/save_restoreStatus.db",	"IOC=TST:R01:IOC:22" )
-dbLoadRecords( "db/bldSettings.db",             "IOC=TST:R01:IOC:22:B0,BLDNO=0" )
-dbLoadRecords( "db/bldFanout.db",               "IOC=TST:R01:IOC:22" )
-dbLoadRecords( "db/ipimb.db",                   "RECNAME=TST:R01:PIM:01,BOX=TST-R01-PIM-01")
+# Load EVR record instances
+dbLoadRecords( "db/evr-ipimb.db", "IOC=$(IOCBASE),EVR=$(EVRBASE)" )
+
+# Datatype is Id_SharedIpimb (35)
+ipimbAdd("$(IPIMBNAME)", "$(IPIMBPORT)", "239.255.24.$(IPIMBPHID)", $(IPIMBPHID), 35, $(TRIGNAME))
+
+# Load remaining record instances
+dbLoadRecords( "db/ipimb_iocAdmin.db",		"IOC=$(IOCBASE)" )
+dbLoadRecords( "db/save_restoreStatus.db",	"IOC=$(IOCBASE)" )
+dbLoadRecords( "db/bldSettings.db",             "IOC=$(IOCBASE),BLDNO=0" )
+dbLoadRecords( "db/ipimb.db",                   "RECNAME=$(IPIMBBASE),BOX=$(IPIMBNAME),TRIGGER=$(EVRBASE):CTRL.DG$(TRIGGER)E")
 
 # Setup autosave
 set_savefile_path( "$(IOC_DATA)/$(IOC)/autosave" )
 set_requestfile_path( "$(TOP)/autosave" )
-save_restoreSet_status_prefix( "TST:R01:IOC:22:" )
+save_restoreSet_status_prefix( "$(IOCBASE):" )
 save_restoreSet_IncompleteSetsOk( 1 )
 save_restoreSet_DatedBackupFiles( 1 )
-set_pass0_restoreFile( "ioc-tst-05.sav" )
-set_pass1_restoreFile( "ioc-tst-05.sav" )
+set_pass0_restoreFile( "$(IOCNAME).sav" )
+set_pass1_restoreFile( "$(IOCNAME).sav" )
 
 # Initialize the IOC and start processing records
 iocInit()
 
 # Start autosave backups
-create_monitor_set( "ioc-tst-05.req", 5, "IOC=TST:R01:IOC:22:" )
-
-# Point our real pretrigger to our BLD fanout.
-dbpf "TST:R01:EVR:22:EVENT14CNT.FLNK", "TST:R01:IOC:22:bldFanout"
+create_monitor_set( "$(IOCNAME).req", 5, "IOC=$(IOCBASE)" )
 
 # BldConfig sAddr uPort uMaxDataSize sInterfaceIp uSrcPyhsicalId iDataType sBldPvTrigger sBldPvFiducial sBldPvList
-# EVENT14CNT is EVR event 140
 BldSetID(0)
-BldConfig( "239.255.24.40", 10148, 512, 0, 40, 35, "TST:R01:IOC:22:bldFanout.LNK1", "TST:R01:PIM:01:YPOS", "TST:R01:EVR:22:PATTERN.L", "TST:R01:PIM:01:CH0_RAW.INP,TST:R01:PIM:01:CH0,TST:R01:PIM:01:CH1,TST:R01:PIM:01:CH2,TST:R01:PIM:01:CH3,TST:R01:PIM:01:SUM,TST:R01:PIM:01:XPOS,TST:R01:PIM:01:YPOS" )
+BldConfig( "239.255.24.$(IPIMBPHID)", 10148, 512, 0, $(IPIMBPHID), 35, "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):YPOS", "$(IPIMBBASE):CURRENTFID", "$(IPIMBBASE):CH0_RAW.INP,$(IPIMBBASE):CH0,$(IPIMBBASE):CH1,$(IPIMBBASE):CH2,$(IPIMBBASE):CH3,$(IPIMBBASE):SUM,$(IPIMBBASE):XPOS,$(IPIMBBASE):YPOS" )
 BldSetDebugLevel(1)
+# Uncomment the next line for BLD generation.
+# BldStart()
 BldShowConfig()
 
-# Extra BLD routines of interest:
-# BldStart()
-# BldIsStarted()
-# BldStop()
+# Configure the IPIMB.
+dbpf $(IPIMBBASE):DoConfig 1
 
+# Fix up the EVR descriptions!
+dbpf $(EVRBASE):FP0L.DESC "$(FP0L)"
+dbpf $(EVRBASE):FP1L.DESC "$(FP1L)"
+dbpf $(EVRBASE):FP2L.DESC "$(FP2L)"
+dbpf $(EVRBASE):FP3L.DESC "$(FP3L)"
 
 # All IOCs should dump some common info after initial startup.
 < /reg/d/iocCommon/All/post_linux.cmd
