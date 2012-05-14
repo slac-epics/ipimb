@@ -226,18 +226,6 @@ int IpimBoard::qlen()
         return len;
 }
 
-#define FID_MAX      0x1ffe0
-#define ROLLOVER_LO  0x00200
-#define ROLLOVER_HI  (FID_MAX-ROLLOVER_LO)
-
-#define FID_GT(a,b) (((a) < ROLLOVER_LO && (b) > ROLLOVER_HI) ||        \
-                     ((a) > (b) && ((a) <= ROLLOVER_HI || (b) >= ROLLOVER_LO)))
-#define FID_DIFF(a,b) (((a) < ROLLOVER_LO && (b) > ROLLOVER_HI)         \
-                       ? (0x1ffe0 + (a) - (b))                          \
-                       : (((b) < ROLLOVER_LO && (a) > ROLLOVER_HI)      \
-                          ? ((a) - (b) - 0x1ffe0)                       \
-                          : ((a) - (b))))
-
 void IpimBoard::do_read()
 {
     int rd, len, blen, i, j, cmd;
@@ -386,7 +374,7 @@ void IpimBoard::do_read()
                 }
 
                 /*
-                 * Go back one fiducial.
+                 * Go back one event.
                  */
                 status = evrTimeGetFifo(&evt_time, trigevent, &idx, -1);
                 newfid = evt_time.nsec & 0x1ffff;
@@ -437,7 +425,7 @@ void IpimBoard::do_read()
                        _physID, idx, newfid, savefid);
                 fflush(stdout);
             }
-            in_sync++;
+            in_sync = 1;
             expected_cnt++;
             flush();
             do_print = 1; /* Talk the next time through the loop! */
@@ -524,6 +512,12 @@ void IpimBoard::do_read()
             /* If we're really in sync, get the time and deliver the data! */
             if (in_sync) {
                 status = evrTimeGetFifo(&ts[dbuf], trigevent, &idx, incr);
+                if (status) {
+                    printf(status ? "IPIMB%d has an ancient timestamp, resynching!", _physID);
+                    fflush(stdout);
+                    in_sync = 0;
+                    do_print = 0;
+                }
                 if (do_print) {
                     unsigned int newfid = ts[dbuf].nsec & 0x1ffff;
                     if (newfid == 0x1ffff) {
