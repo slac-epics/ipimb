@@ -513,7 +513,7 @@ void IpimBoard::do_read()
             if (in_sync) {
                 status = evrTimeGetFifo(&ts[dbuf], trigevent, &idx, incr);
                 if (status) {
-                    printf(status ? "IPIMB%d has an ancient timestamp, resynching!", _physID);
+                    printf("IPIMB%d has an ancient timestamp, resynching!", _physID);
                     fflush(stdout);
                     in_sync = 0;
                     do_print = 0;
