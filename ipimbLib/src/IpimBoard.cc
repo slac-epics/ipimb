@@ -507,7 +507,7 @@ void IpimBoard::do_read()
                 }
             } else
                 incr = 1;
-            expected_cnt = current_cnt + 1;
+            expected_cnt = current_cnt + incr;
 
             /* If we're really in sync, get the time and deliver the data! */
             if (in_sync) {
