@@ -504,10 +504,11 @@ void IpimBoard::do_read()
                         fflush(stdout);
                     }
                     in_sync = 0;
-                }
+                } else
+                    expected_cnt += incr - 1;
             } else
                 incr = 1;
-            expected_cnt = current_cnt + incr;
+            expected_cnt = current_cnt + 1;
 
             /* If we're really in sync, get the time and deliver the data! */
             if (in_sync) {
