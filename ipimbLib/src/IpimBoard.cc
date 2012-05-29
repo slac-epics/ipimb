@@ -400,7 +400,7 @@ void IpimBoard::do_read()
                     continue;
                 }
                 if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                    printf("IPIMB%d is moving back to timestamp fiducial 0x%x at index %d.\n",
+                    printf("IPIMB%d is moving back to timestamp fiducial 0x%x at index %lld.\n",
                            _physID, newfid, idx);
                     fflush(stdout);
                 }
