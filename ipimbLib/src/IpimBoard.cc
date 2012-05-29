@@ -234,7 +234,7 @@ void IpimBoard::do_read()
     unsigned crc;
     unsigned char rdbuf[3 * DataPackets];
     uint64_t expected_cnt = 1, current_cnt;
-    unsigned int idx = -1;
+    unsigned long long idx = -1;
     int incr = 1, in_sync = 0;
     epicsTimeStamp evt_time;
     int status = 0;
@@ -410,9 +410,9 @@ void IpimBoard::do_read()
              * yet.  Wait for them to rotate until we get something close!
              */
             while (FID_DIFF(savefid, newfid) > 2) {
-                unsigned int idx2;
+                unsigned long long idx2;
                 if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                    printf("IPIMB%d has savefid=0x%x, newfid=0x%x, idx=%d.  Waiting...\n",
+                    printf("IPIMB%d has savefid=0x%x, newfid=0x%x, idx=%lld.  Waiting...\n",
                            _physID, savefid, newfid, idx);
                     fflush(stdout);
                 }
@@ -430,7 +430,7 @@ void IpimBoard::do_read()
                     break;
                 } else {
                     if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                        printf("IPIMB%d loop has idx=%d, newfid=0x%x\n", 
+                        printf("IPIMB%d loop has idx=%lld, newfid=0x%x\n", 
                                _physID, idx, newfid);
                         fflush(stdout);
                     }
@@ -451,7 +451,7 @@ void IpimBoard::do_read()
              * *past* our real fiducial?  (Unlikely, I know.)
              */
             if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                printf("IPIMB%d resync established with index %d at timestamp fiducial 0x%x at actual fiducial 0x%x.\n",
+                printf("IPIMB%d resync established with index %lld at timestamp fiducial 0x%x at actual fiducial 0x%x.\n",
                        _physID, idx, newfid, savefid);
                 fflush(stdout);
             }
@@ -561,7 +561,7 @@ void IpimBoard::do_read()
                         in_sync = 0;
                     } else {
                         if (IPIMB_BRD_DEBUG & DEBUG_TC) {
-                            printf("IPIMB%d is fully resynched with index %d at fiducial 0x%x (lastfid = 0x%x), current packet=0x%llx.\n",
+                            printf("IPIMB%d is fully resynched with index %lld at fiducial 0x%x (lastfid = 0x%x), current packet=0x%llx.\n",
                                    _physID, idx, ts[dbuf].nsec & 0x1ffff, lastfid, current_cnt);
                             fflush(stdout);
                         }
@@ -569,7 +569,7 @@ void IpimBoard::do_read()
                     do_print = 0;
                 } else {
                     if (IPIMB_BRD_DEBUG & DEBUG_TC_V) {
-                        printf("IPIMB%d: idx %d, fid 0x%x, pkt 0x%llx.\n",
+                        printf("IPIMB%d: idx %lld, fid 0x%x, pkt 0x%llx.\n",
                                _physID, idx, ts[dbuf].nsec & 0x1ffff, current_cnt);
                         fflush(stdout);
                     }
@@ -578,7 +578,7 @@ void IpimBoard::do_read()
 
             if (in_sync) {
                 if (ts[0].nsec == ts[1].nsec && (ts[0].nsec & 0x1ffff) != 0x1ffff) {
-                    printf("IPIMB@%d: TS[0] = %08x.%08x, TS[1] = %08x.%08x, idx=%d, incr=%d, status=%d!\n",
+                    printf("IPIMB@%d: TS[0] = %08x.%08x, TS[1] = %08x.%08x, idx=%lld, incr=%d, status=%d!\n",
                            _physID, ts[0].secPastEpoch, ts[0].nsec, ts[1].secPastEpoch, ts[1].nsec,
                            idx, incr, status);
                     fflush(stdout);
