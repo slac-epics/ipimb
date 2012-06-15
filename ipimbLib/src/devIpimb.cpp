@@ -174,29 +174,17 @@ long read_ai(struct aiRecord *pai)
             switch(pdevdata->chnlnum) {
             case 0:
                 memcpy(&pdevdata->pdevice->ipmData, ipmData, sizeof(IpimBoardData)); // Remember this!
-                if (ipmData->ch0_ps > ipmData->ch0)
-                    pai->rval = 65535 + ipmData->ch0 - ipmData->ch0_ps;
-                else
-                    pai->rval = 65535;
+                pai->rval = ipmData->ch0;
                 break;
             case 1:
-                if (ipmData->ch1_ps > ipmData->ch1)
-                    pai->rval = 65535 + ipmData->ch1 - ipmData->ch1_ps;
-                else
-                    pai->rval = 65535;
+                pai->rval = ipmData->ch1;
                 break;
             case 2:
-                if (ipmData->ch2_ps > ipmData->ch2)
-                    pai->rval = 65535 + ipmData->ch2 - ipmData->ch1_ps;
-                else
-                    pai->rval = 65535;
+                pai->rval = ipmData->ch2;
                 break;
             case 3:
             default:
-                if (ipmData->ch3_ps > ipmData->ch3)
-                    pai->rval = 65535 + ipmData->ch3 - ipmData->ch1_ps;
-                else
-                    pai->rval = 65535;
+                pai->rval = ipmData->ch3;
                 break;
             }
         } else

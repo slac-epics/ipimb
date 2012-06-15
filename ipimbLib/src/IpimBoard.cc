@@ -513,6 +513,7 @@ void IpimBoard::do_read()
             pthread_mutex_unlock(&mutex);
         } else {
             IpimBoardData *d = new (_data[dbuf]) IpimBoardData();
+            d->adjustdata();
 
             if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_DATA)) {
                 fprintf(stderr, "Got data packet in %d.\n", dbuf);

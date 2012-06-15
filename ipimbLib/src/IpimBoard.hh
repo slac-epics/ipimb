@@ -82,6 +82,25 @@ namespace Pds {
         uint64_t triggerCounter() {
             return (((uint64_t)tc[0]) << 48) | (((uint64_t)tc[1]) << 32) | (((uint64_t)tc[2]) << 16) | tc[3];
         }
+        void adjustdata() {
+            if (ch0_ps > ch0)
+                ch0 = 65535 + ch0 - ch0_ps;
+            else
+                ch0 = 65535;
+            if (ch1_ps > ch1)
+                ch1 = 65535 + ch1 - ch1_ps;
+            else
+                ch1 = 65535;
+            if (ch2_ps > ch2)
+                ch2 = 65535 + ch2 - ch2_ps;
+            else
+                ch2 = 65535;
+            if (ch3_ps > ch3)
+                ch3 = 65535 + ch3 - ch3_ps;
+            else
+                ch3 = 65535;
+
+        }
         uint16_t tc[4];
         uint16_t config0;
         uint16_t config1;
