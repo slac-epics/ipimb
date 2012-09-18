@@ -39,6 +39,7 @@ record(genSub, "$(RECNAME):CURRENTFID") {
   field(SNAM, "evrTimeGetFiducial")
   field(INPA, "$(RECNAME):CH0_RAW.NAME")
   field(FLNK, "$(RECNAME):SUM")
+  field(TSE,  "-2")
 }
 
 record(calc,"$(RECNAME):SUM")

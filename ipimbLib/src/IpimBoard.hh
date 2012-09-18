@@ -118,7 +118,7 @@ namespace Pds {
 
     class IpimBoardCommand {
     public:
-        IpimBoardCommand(bool write, unsigned address, unsigned data);
+        IpimBoardCommand(bool write, unsigned address, unsigned data, int _physID);
         ~IpimBoardCommand();
         unsigned short* getAll();
     

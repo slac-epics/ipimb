@@ -140,6 +140,8 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
         pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140);
     } else {
         unsigned long *trig = (unsigned long *) trigaddr.pfield;
+        printf("Found PV trigger for IPIMB%d %s at %p (gen at %p)\n", 
+               physID, trigger, trig, trig + 4);
         pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, trig, trig + 4);
     }
 

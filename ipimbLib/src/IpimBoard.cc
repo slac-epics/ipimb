@@ -45,15 +45,19 @@ static const unsigned NewVhdlVersion = 0x00010000;
 #define DEBUG_DATA     32
 #define DEBUG_TC       64
 #define DEBUG_TC_V     128
+#define DEBUG_CMD      256
 extern int IPIMB_BRD_DEBUG;
+extern int IPIMB_BRD_ID;
+#define DBG_ENABLED(flag)  ((IPIMB_BRD_ID == -1 || IPIMB_BRD_ID == _physID) && \
+                            (IPIMB_BRD_DEBUG & (flag)))
 
-static unsigned CRC(unsigned short* lst, int length)
+static unsigned CRC(unsigned short* lst, int length, int _physID)
 {
     unsigned crc = 0xffff;
     for (int l=0; l<length; l++) {
         unsigned short word = *lst;
-        if (IPIMB_BRD_DEBUG & DEBUG_CRC) {
-            printf("In CRC, have word 0x%04x\n", word);
+        if (DBG_ENABLED(DEBUG_CRC)) {
+            printf("IPIMB%d: In CRC, have word 0x%04x\n", _physID, word);
         }
         lst++;
         // Calculate CRC 0x0421 (x16 + x12 + x5 + 1) for protocol calculation
@@ -89,7 +93,7 @@ static unsigned CRC(unsigned short* lst, int length)
     return crc;
 }
 
-IpimBoardCommand::IpimBoardCommand(bool write, unsigned address, unsigned data) 
+IpimBoardCommand::IpimBoardCommand(bool write, unsigned address, unsigned data, int _physID) 
 {
     _commandList[0] = address & 0xFF;
     _commandList[1] = data & 0xFFFF;
@@ -97,10 +101,11 @@ IpimBoardCommand::IpimBoardCommand(bool write, unsigned address, unsigned data)
     if (write) {
         _commandList[0] |= 1<<8;
     }
-    _commandList[3] = CRC(_commandList, CRPackets-1);
-    if (IPIMB_BRD_DEBUG & DEBUG_COMMAND)
-        printf("data: 0x%x, address 0x%x, write %d, command list: 0x%x, 0x%x, 0x%x 0x%x\n", 
-               data, address, write, _commandList[0], _commandList[1], _commandList[2], _commandList[3]);
+    _commandList[3] = CRC(_commandList, CRPackets-1, _physID);
+    if (DBG_ENABLED(DEBUG_COMMAND))
+        printf("IPIMB%d data: 0x%x, address 0x%x, write %d, command list: 0x%x, 0x%x, 0x%x 0x%x\n", 
+               _physID, data, address, write, 
+               _commandList[0], _commandList[1], _commandList[2], _commandList[3]);
 }
 
 IpimBoardCommand::~IpimBoardCommand()
@@ -252,20 +257,20 @@ void IpimBoard::do_read()
     for (;;) {
         rd = read(_fd, rdbuf, 1);
         if (rd <= 0 || !SOFR(rdbuf[0])) { /* Skip until we are in sync.  Do we ever want to quit?!? */
-            if (rd > 0 && (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_SYNC))) {
+            if (rd > 0 && (DBG_ENABLED(DEBUG_READER|DEBUG_SYNC))) {
                 did_skip = 1;
-                fprintf(stderr, "Ser R: 0x%02x (skipped)\n", rdbuf[0]);
+                fprintf(stderr, "IPIMB%d: Ser R: 0x%02x (skipped)\n", _physID, rdbuf[0]);
                 fflush(stderr);
             }
             continue;
         }
 
-        if ((IPIMB_BRD_DEBUG & DEBUG_TC_V) && did_skip) {
+        if (DBG_ENABLED(DEBUG_TC_V) && did_skip) {
             printf("IPIMB%d skipped!\n", _physID);
             fflush(stdout);
         }
         did_skip = 0;
-        if ((IPIMB_BRD_DEBUG & DEBUG_TC_V) && !COMMAND(rdbuf[0])) {
+        if (DBG_ENABLED(DEBUG_TC_V) && !COMMAND(rdbuf[0])) {
             printf("IPIMB%d data read @ fid 0x%x\n", _physID, lastfid);
             fflush(stdout);
         }
@@ -287,6 +292,7 @@ void IpimBoard::do_read()
                 if (eventvalid)
                     printf("IPIMB@%d: Setting event trigger to %d\n", _physID, trigevent);
             }
+            fflush(stdout);
         }
 
         /*
@@ -310,7 +316,7 @@ void IpimBoard::do_read()
         if (!in_sync && eventvalid) {
             int savefid, newfid, cnt;
 
-            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+            if (DBG_ENABLED(DEBUG_TC)) {
                 printf("IPIMB%d resynchronizing at actual fiducial 0x%x.\n",
                        _physID, lastfid);
                 fflush(stdout);
@@ -319,7 +325,7 @@ void IpimBoard::do_read()
             /* Get rid of our current packet! */
             flush();
             if (!COMMAND(rdbuf[0])) {
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d is flushing expected data packet 0x%llx.\n",
                            _physID, expected_cnt);
                     fflush(stdout);
@@ -336,7 +342,7 @@ void IpimBoard::do_read()
             }
             if (cnt == 5000 || gen != *_gen) {
                 /* This is just bad.  Flush and hope for better the next time we're here. */
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d resync failed, restarting!\n", _physID);
                     fflush(stdout);
                 }
@@ -354,7 +360,7 @@ void IpimBoard::do_read()
             status = evrTimeGetFifo(&evt_time, trigevent, &idx, MAX_TS_QUEUE);
             newfid = evt_time.nsec & 0x1ffff;
             if (newfid == 0x1ffff) {
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d: Bad fiducial at time %08x:%08x!\n", _physID,
                            evt_time.secPastEpoch, evt_time.nsec);
                     fflush(stdout);
@@ -362,7 +368,7 @@ void IpimBoard::do_read()
                 continue;
             }
 
-            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+            if (DBG_ENABLED(DEBUG_TC)) {
                 printf("IPIMB%d resync sees timestamp fiducial 0x%x at actual fiducial 0x%x.\n",
                        _physID, newfid, savefid);
                 fflush(stdout);
@@ -392,14 +398,14 @@ void IpimBoard::do_read()
                 status = evrTimeGetFifo(&evt_time, trigevent, &idx, -1);
                 newfid = evt_time.nsec & 0x1ffff;
                 if (newfid == 0x1ffff) {
-                    if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    if (DBG_ENABLED(DEBUG_TC)) {
                         printf("IPIMB%d resync sees a bad fiducial, restarting!\n", _physID);
                         fflush(stdout);
                     }
                     flush();
                     continue;
                 }
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d is moving back to timestamp fiducial 0x%x at index %lld.\n",
                            _physID, newfid, idx);
                     fflush(stdout);
@@ -411,7 +417,7 @@ void IpimBoard::do_read()
              */
             while (FID_DIFF(savefid, newfid) > 2) {
                 unsigned long long idx2;
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d has savefid=0x%x, newfid=0x%x, idx=%lld.  Waiting...\n",
                            _physID, savefid, newfid, idx);
                     fflush(stdout);
@@ -422,14 +428,14 @@ void IpimBoard::do_read()
                 idx = idx2;
                 newfid = evt_time.nsec & 0x1ffff;
                 if (gen != *_gen || newfid == 0x1ffff) {
-                    if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    if (DBG_ENABLED(DEBUG_TC)) {
                         printf("IPIMB%d loop broken by reconfig or bad fiducial, restarting.\n",
                                _physID);
                         fflush(stdout);
                     }
                     break;
                 } else {
-                    if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    if (DBG_ENABLED(DEBUG_TC)) {
                         printf("IPIMB%d loop has idx=%lld, newfid=0x%x\n", 
                                _physID, idx, newfid);
                         fflush(stdout);
@@ -438,7 +444,7 @@ void IpimBoard::do_read()
             }
             if (gen != *_gen || newfid == 0x1ffff) {
                 /* This is just bad.  Flush and hope for better the next time we're here. */
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d resync failed with fiducial 0x%x, restarting!\n",
                            _physID, (evt_time.nsec & 0x1ffff));
                     fflush(stdout);
@@ -450,7 +456,7 @@ void IpimBoard::do_read()
              * We should probably check that we are, indeed, close.  What if newfid skipped
              * *past* our real fiducial?  (Unlikely, I know.)
              */
-            if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+            if (DBG_ENABLED(DEBUG_TC)) {
                 printf("IPIMB%d resync established with index %lld at timestamp fiducial 0x%x at actual fiducial 0x%x.\n",
                        _physID, idx, newfid, savefid);
                 fflush(stdout);
@@ -478,8 +484,9 @@ void IpimBoard::do_read()
         }
         p = cmd ? _cmd[cbuf] : _data[dbuf];
         for (i = 0, j = 0; i < len; i++, j += 3) {
-            if (IPIMB_BRD_DEBUG & DEBUG_READER) {
-                fprintf(stderr, "Ser R: 0x%02x 0x%02x 0x%02x --> 0x%04x\n", rdbuf[j+0], rdbuf[j+1], rdbuf[j+2],
+            if (DBG_ENABLED(DEBUG_READER)) {
+                fprintf(stderr, "IPIMB%d: Ser R: 0x%02x 0x%02x 0x%02x --> 0x%04x\n", _physID,
+                        rdbuf[j+0], rdbuf[j+1], rdbuf[j+2],
                         (rdbuf[j+0] & 0xf) | ((rdbuf[j+1] & 0x3f)<<4) | ((rdbuf[j+2] & 0x3f)<<10));
             }
             if (!FIRST(rdbuf[j]) || !SECOND(rdbuf[j+1]) || !THIRD(rdbuf[j+2]))
@@ -489,18 +496,18 @@ void IpimBoard::do_read()
             p[i] = (rdbuf[j] & 0xf) | ((rdbuf[j+1] & 0x3f)<<4) | ((rdbuf[j+2] & 0x3f)<<10);
         }
         if (i != len) {
-            if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_SYNC)) {
-                fprintf(stderr, "Skipping to next SOF.\n");
+            if (DBG_ENABLED(DEBUG_READER|DEBUG_SYNC)) {
+                fprintf(stderr, "IPIMB%d: Skipping to next SOF.\n", _physID);
             }
             continue;
         }
 
         /* Check the CRC! */
-        crc = CRC(p, len - 1);
+        crc = CRC(p, len - 1, _physID);
         if (crc != p[len - 1]) {
-            if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_SYNC|DEBUG_CRC)) {
-                printf("data CRC check failed (got 0x%04x wanted 0x%04x)\n",
-                       p[len - 1], crc);
+            if (DBG_ENABLED(DEBUG_READER|DEBUG_SYNC|DEBUG_CRC)) {
+                printf("IPIMB%d: data CRC check failed (got 0x%04x wanted 0x%04x)\n",
+                       _physID, p[len - 1], crc);
             }
             continue;
         }
@@ -510,19 +517,23 @@ void IpimBoard::do_read()
             pthread_mutex_lock(&mutex);
             cbuf = cbuf ? 0 : 1;
             pthread_cond_signal(&cmdready); /* Wake up whoever did the read! */
+            if (DBG_ENABLED(DEBUG_READER|DEBUG_DATA)) {
+                fprintf(stderr, "IPIMB%d: Got command response packet (gen=%d, _gen=%d, trigevent=%d, _trigger=%d, eventvalid=%d).\n",
+                        _physID, gen, *_gen, trigevent, *_trigger, eventvalid);
+            }
             pthread_mutex_unlock(&mutex);
         } else {
             IpimBoardData *d = new (_data[dbuf]) IpimBoardData();
             d->adjustdata();
 
-            if (IPIMB_BRD_DEBUG & (DEBUG_READER|DEBUG_DATA)) {
-                fprintf(stderr, "Got data packet in %d.\n", dbuf);
+            if (DBG_ENABLED(DEBUG_READER|DEBUG_DATA)) {
+                fprintf(stderr, "IPIMB%d: Got data packet in %d.\n", _physID, dbuf);
             }
 
             /* Check if this is the next expected data packet. */
             current_cnt = d->triggerCounter();
             if (current_cnt != expected_cnt) {
-                if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d trigger count: expected 0x%llx, have 0x%llx.\n", 
                            _physID, expected_cnt, current_cnt);
                     fflush(stdout);
@@ -530,7 +541,7 @@ void IpimBoard::do_read()
                 incr = current_cnt - expected_cnt + 1;
                 if (incr <= 0 || incr > 5) {
                     /* If we are too far off, just start over! */
-                    if ((IPIMB_BRD_DEBUG & DEBUG_TC) && current_cnt != 1) {
+                    if (DBG_ENABLED(DEBUG_TC) && current_cnt != 1) {
                         printf("IPIMB%d: resynchronizing timestamps!\n", _physID);
                         fflush(stdout);
                     }
@@ -544,7 +555,7 @@ void IpimBoard::do_read()
             if (in_sync) {
                 status = evrTimeGetFifo(&ts[dbuf], trigevent, &idx, incr);
                 if (status) {
-                    if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                    if (DBG_ENABLED(DEBUG_TC)) {
                         printf("IPIMB%d has an invalid timestamp, resynching!\n", _physID);
                         fflush(stdout);
                     }
@@ -554,14 +565,14 @@ void IpimBoard::do_read()
                 if (do_print) {
                     unsigned int newfid = ts[dbuf].nsec & 0x1ffff;
                     if (newfid == 0x1ffff) {
-                        if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                        if (DBG_ENABLED(DEBUG_TC)) {
                             printf("IPIMB%d has a bad fiducial (lastfid = 0x%x), resynching!\n",
                                    _physID, lastfid);
                             fflush(stdout);
                         }
                         in_sync = 0;
                     } else {
-                        if (IPIMB_BRD_DEBUG & DEBUG_TC) {
+                        if (DBG_ENABLED(DEBUG_TC)) {
                             printf("IPIMB%d is fully resynched with index %lld at fiducial 0x%x (lastfid = 0x%x), current packet=0x%llx.\n",
                                    _physID, idx, ts[dbuf].nsec & 0x1ffff, lastfid, current_cnt);
                             fflush(stdout);
@@ -569,7 +580,7 @@ void IpimBoard::do_read()
                     }
                     do_print = 0;
                 } else {
-                    if (IPIMB_BRD_DEBUG & DEBUG_TC_V) {
+                    if (DBG_ENABLED(DEBUG_TC_V)) {
                         printf("IPIMB%d: idx %lld, fid 0x%x, pkt 0x%llx.\n",
                                _physID, idx, ts[dbuf].nsec & 0x1ffff, current_cnt);
                         fflush(stdout);
@@ -601,7 +612,7 @@ int IpimBoard::WriteCommand(unsigned short* cList)
         wrdata[3*i  ] = 0x90 | (data & 0xf) | (i == 0 ? 0x40 : 0) | (i == 3 ? 0x20 : 0);
         wrdata[3*i+1] = (data>>4) & 0x3f;
         wrdata[3*i+2] = 0x40 | ((data>>10) & 0x3f);
-        if (IPIMB_BRD_DEBUG & DEBUG_COMMAND) {
+        if (DBG_ENABLED(DEBUG_COMMAND)) {
             printf("Out: 0x%04x %c%c%c\n", data,
                    (wrdata[3*i]&0x40) ? 'S' : ' ', (wrdata[3*i]&0x20) ? 'E' : ' ', (wrdata[3*i]&0x10) ? 'C' : ' ');
             printf("Ser W: 0x%02x 0x%02x 0x%02x\n", wrdata[3*i], wrdata[3*i+1], wrdata[3*i+2]);
@@ -646,7 +657,7 @@ static char *regnames[] = {
 
 unsigned IpimBoard::ReadRegister(unsigned regAddr)
 {
-    IpimBoardCommand cmd = IpimBoardCommand(false, regAddr, 0);
+    IpimBoardCommand cmd = IpimBoardCommand(false, regAddr, 0, _physID);
     struct timeval tp;
     struct timespec ts;
     int do_write = 1, i;
@@ -667,7 +678,7 @@ unsigned IpimBoard::ReadRegister(unsigned regAddr)
         IpimBoardResponse resp = IpimBoardResponse(_cmd[cbuf ? 0 : 1]);
         if (resp.getAddr() == regAddr) {
             unsigned result = resp.getData();
-            if (IPIMB_BRD_DEBUG & DEBUG_REGISTER) {
+            if (DBG_ENABLED(DEBUG_REGISTER)) {
                 printf("ReadRegister(%s) --> 0x%x (%d)\n", REGNAME(regAddr), result, result);
             }
             pthread_mutex_unlock(&mutex);
@@ -683,11 +694,11 @@ unsigned IpimBoard::ReadRegister(unsigned regAddr)
 
 void IpimBoard::WriteRegister(unsigned regAddr, unsigned regValue)
 {
-    IpimBoardCommand cmd = IpimBoardCommand(true, regAddr, regValue);
+    IpimBoardCommand cmd = IpimBoardCommand(true, regAddr, regValue, _physID);
     WriteCommand(cmd.getAll());
     struct timespec req = {0, 5000000}; // 5 ms
     nanosleep(&req, NULL);
-    if (IPIMB_BRD_DEBUG & DEBUG_REGISTER) {
+    if (DBG_ENABLED(DEBUG_REGISTER)) {
         printf("WriteRegister(%s, 0x%x) done.\n", REGNAME(regAddr), regValue);
     }
 }
