@@ -333,13 +333,32 @@ void IpimBoard::do_read()
                 expected_cnt++;
             }
 
+            savefid = lastfid; 
+
             /* Wait for either a reconfigure or something new to appear in the queue */
             for (cnt = 1; cnt < 5000; cnt++) {
                 struct timespec req = {0, 1000000}; /* 1 ms */
                 nanosleep(&req, NULL);
-                if (qlen() || gen != *_gen)
+                if (gen != *_gen)
                     break;
+                if (qlen()) {
+                    newfid = lastfid;
+                    /*
+                     * The fastest we go is 120Hz (3 fiducials).  If we see our "next"
+                     * packet in less than 2 fiducials, we're really seeing more of the
+                     * SAME packet.  Therefore, just flush again!
+                     */
+                    if (FID_DIFF(newfid, savefid) <= 2) {
+                        if (DBG_ENABLED(DEBUG_TC)) {
+                            printf("IPIMB%d double flush?!?\n", _physID);
+                            fflush(stdout);
+                        }
+                        flush();
+                    } else
+                        break;
+                }
             }
+
             if (cnt == 5000 || gen != *_gen) {
                 /* This is just bad.  Flush and hope for better the next time we're here. */
                 if (DBG_ENABLED(DEBUG_TC)) {
