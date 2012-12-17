@@ -8,6 +8,7 @@
 #include <dbAccess.h>
 #include <longSubRecord.h>
 #include "drvIpimb.h"
+#include "evrTime.h"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -142,7 +143,8 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
         unsigned long *trig = (unsigned long *) trigaddr.pfield;
         printf("Found PV trigger for IPIMB%d %s at %p (gen at %p)\n", 
                physID, trigger, trig, trig + 4);
-        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, trig, trig + 4);
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID,
+                                   trig, trig + MAX_EV_TRIGGERS);
     }
 
     /* Add to the device linked list */
