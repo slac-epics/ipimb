@@ -16,6 +16,7 @@ DB += bldSettings.db
 DB += bldFanout.db
 DB += ipimb_iocAdmin.db
 DB += evr-ipimb.db
+DB += evrSLAC-ipimb.db
 
 #----------------------------------------------------
 # Create and install (or just install)
