@@ -173,6 +173,7 @@ namespace Pds {
         int  qlen();
 
         void do_read(void);       // The main thread body!
+        void do_configure(void);  // The configure thread body!
 
         int WriteCommand(unsigned short*);
         unsigned ReadRegister(unsigned regAddr);
@@ -201,6 +202,9 @@ namespace Pds {
         uint16_t GetStatus();
         uint16_t GetErrors();
         void SetAdcDelay(uint32_t adcDelay);
+
+        bool isConfiguring(void) { return conf_in_progress; }
+        bool isConfigOK(void)    { return config_ok; }
     
     private:
         int   _physID;               // Physical ID
@@ -220,8 +224,14 @@ namespace Pds {
 
         pthread_mutex_t mutex;
         pthread_cond_t  cmdready;
+        pthread_cond_t  confreq;
         pthread_t reader;
+        pthread_t configurer;
         int have_reader;
+        int have_configurer;
+        bool conf_in_progress;
+        Ipimb::ConfigV2 newconfig;
+        int config_gen;
     };
 }
 #endif

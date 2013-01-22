@@ -49,9 +49,10 @@ static struct PARAM_MAP
 
 typedef struct IPIMB_DEVDATA
 {
-    IPIMB_DEVICE    * pdevice;
-    unsigned short      chnlnum;
-    int         funcflag;
+    IPIMB_DEVICE    *pdevice;
+    unsigned short   chnlnum;
+    int              funcflag;
+    CALLBACK         callback;
 } IPIMB_DEVDATA;
 
 /* This function will be called by all device support */
@@ -213,6 +214,72 @@ long ai_lincvt(struct aiRecord   *pai, int after)
     pai->eslo = (pai->eguf - pai->egul)/(float)0x10000;
     pai->roff = 0x0;
     return(0);
+}
+
+static void ipimbConfigCallback(CALLBACK *pcallback)
+{
+    void *puser;
+    struct biRecord *pbi;
+    struct rset *prset;
+    IPIMB_DEVDATA * pdevdata;
+
+    callbackGetUser(puser,pcallback);
+    pbi = (struct biRecord *)puser;
+    pdevdata = (IPIMB_DEVDATA *)(pbi->dpvt);
+    if (pdevdata->pdevice->ipmBoard.isConfiguring()) {
+        callbackRequestDelayed(&pdevdata->callback,1); /* Wait again! */
+    } else {
+        /* We're done, finish the record processing. */
+        prset=(struct rset *)(pbi->rset);
+        dbScanLock((struct dbCommon *)pbi);
+        (*(int (*)(struct dbCommon *))prset->process)((struct dbCommon *)pbi);
+        dbScanUnlock((struct dbCommon *)pbi);
+    }
+}
+
+long init_bi( struct biRecord * pbi)
+{
+    CALLBACK *pcallback;
+    pbi->dpvt = NULL;
+
+    if (pbi->inp.type!=INST_IO)
+    {
+        recGblRecordError(S_db_badField, (void *)pbi, "devBiIPIMB Init_record, Illegal INP");
+        pbi->pact=TRUE;
+        return (S_db_badField);
+    }
+
+    if(IPIMB_DevData_Init((dbCommon *) pbi, pbi->inp.value.instio.string) != 0)
+    {
+        errlogPrintf("Fail to init devdata for record %s!\n", pbi->name);
+        recGblRecordError(S_db_badField, (void *) pbi, "Init devdata Error");
+        pbi->pact = TRUE;
+        return (S_db_badField);
+    }
+
+    pcallback = &((IPIMB_DEVDATA *)pbi->dpvt)->callback;
+    callbackSetCallback(ipimbConfigCallback, pcallback);
+    callbackSetUser(pbi, pcallback);
+
+    return 0;
+}
+
+long read_bi(struct aiRecord *pbi)
+{
+    IPIMB_DEVDATA * pdevdata = (IPIMB_DEVDATA *)(pbi->dpvt);
+
+    if (pdevdata->pdevice->ipmBoard.isConfiguring()) {
+        pbi->pact = TRUE;
+        callbackRequestDelayed(&pdevdata->callback,1); /* Wait a second for configuration */
+    } else {
+        pbi->pact = FALSE;
+        pbi->rval = pdevdata->pdevice->ipmBoard.isConfigOK();
+        printf("\n!!! ipimbConfigProc [%s] was finished for ipimb box [%s], config_ok=%d !!!\n",
+               pbi->name, pdevdata->pdevice->name, pbi->rval);
+    }
+
+    pbi->udf=FALSE;
+    return 2; /* No convert */
 }
 
 #ifdef  __cplusplus

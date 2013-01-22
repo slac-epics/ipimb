@@ -231,6 +231,15 @@ record(genSub, "$(RECNAME):Configure") {
 # Box name
   field(INPU, "$(RECNAME):BoxName")
 
+  field(FLNK, "$(RECNAME):WaitConfig")
+}
+
+record(bi, "$(RECNAME):WaitConfig") {
+  field(DESC, "Wait for Configuration")
+  field(SCAN, "Passive")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):0:DATA")
+  field(PRIO, "HIGH")
   field(FLNK, "$(RECNAME):PostConfig")
 }
 

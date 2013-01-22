@@ -105,8 +105,6 @@ long ipimbConfigProc(struct genSubRecord *psub)
     rtn = ipimbConfigureByName(ipimbName, chargeAmpRange, calibrationRange, resetLength, resetDelay, chargeAmpRefVoltage, calibrationVoltage, diodeBias,
                           calStrobeLength, trigDelay, trigPsDelay, adcDelay);
 
-
-    printf("\n!!! ipimbConfigProc [%s] was finished for ipimb box [%s] !!!\n", psub->name, ipimbName);
     return rtn;
 }
 

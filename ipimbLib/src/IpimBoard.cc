@@ -155,6 +155,14 @@ static void *ipimb_thread_body(void *p)
     return NULL;
 }
 
+static void *ipimb_configure_body(void *p)
+{
+    IpimBoard *ipimb = (IpimBoard *)p;
+
+    ipimb->do_configure();
+    return NULL;
+}
+
 IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned long* trigger,
                      unsigned long *gen)
 {
@@ -195,11 +203,17 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned
     dbuf = 0;
     have_data = 0;
 
+    conf_in_progress = false;
+    config_ok = false;
+    config_gen = 0;
+
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cmdready, NULL);
+    pthread_cond_init(&confreq, NULL);
     pthread_attr_init(&attr);
     pthread_attr_getstacksize(&attr, &stacksize);
     have_reader = !pthread_create(&reader, &attr, ipimb_thread_body, (void *)this);
+    have_configurer = !pthread_create(&configurer, &attr, ipimb_configure_body, (void *)this);
 }
 
 IpimBoard::~IpimBoard() 
@@ -208,6 +222,8 @@ IpimBoard::~IpimBoard()
     delete _serialDevice;
     if (have_reader)
         pthread_kill(reader, SIGKILL);
+    if (have_configurer)
+        pthread_kill(configurer, SIGKILL);
 }
 
 int IpimBoard::get_fd()
@@ -735,70 +751,94 @@ IpimBoardData *IpimBoard::getData(epicsTimeStamp *t)
 
 bool IpimBoard::configure(Ipimb::ConfigV2& config)
 {
-    config_ok = true;
+    pthread_mutex_lock(&mutex);
+    newconfig = config;
+    config_gen++;
+    conf_in_progress = true;
+    printf("IPIMB%d requesting configuration generation %d\n", _physID, config_gen);
+    pthread_cond_signal(&confreq); /* Wake up the configuration task */
+    pthread_mutex_unlock(&mutex);
+    return true;
+}
 
-    WriteRegister(errors, 0xffff);
-    unsigned vhdlVersion = ReadRegister(vhdl_version);
+void IpimBoard::do_configure()
+{
+    int current_gen = 0;    /* Must match initial value of config_gen! */
+    Ipimb::ConfigV2 config;
 
-    if (vhdlVersion == BAD_VALUE) {
-        printf("read of board failed - check serial and power connections of fd %d, device %s\nGiving up on configuration\n", _fd, _serialDevice);
-        config_ok = false;
-        return config_ok;
-    }
+    for (;;) {
+        pthread_mutex_lock(&mutex);
+        while (current_gen == config_gen) {
+            conf_in_progress = false;
+            pthread_cond_wait(&confreq, &mutex);
+        }
+        current_gen = config_gen;
+        config = newconfig;
+        pthread_mutex_unlock(&mutex);
 
-    // hope to never want to calibrate in the daq environment
-    bool lstCalibrateChannels[4] = {false, false, false, false};
-    SetCalibrationMode(lstCalibrateChannels);
+        config_ok = true;
+    
+        WriteRegister(errors, 0xffff);
+        unsigned vhdlVersion = ReadRegister(vhdl_version);
+
+        if (vhdlVersion == BAD_VALUE) {
+            printf("read of board failed - check serial and power connections of fd %d, device %s\nGiving up on configuration\n", _fd, _serialDevice);
+            config_ok = false;
+            continue;
+        }
+
+        // hope to never want to calibrate in the daq environment
+        bool lstCalibrateChannels[4] = {false, false, false, false};
+        SetCalibrationMode(lstCalibrateChannels);
   
-    uint64_t tcnt = config.triggerCounter();
-    unsigned start0 = (unsigned) ((0xFFFFFFFF00000000ULL&tcnt)>>32);
-    unsigned start1 = (unsigned) (0xFFFFFFFF&tcnt);
-    SetTriggerCounter(start0, start1);
+        uint64_t tcnt = config.triggerCounter();
+        unsigned start0 = (unsigned) ((0xFFFFFFFF00000000ULL&tcnt)>>32);
+        unsigned start1 = (unsigned) (0xFFFFFFFF&tcnt);
+        SetTriggerCounter(start0, start1);
 
-    SetChargeAmplifierRef(config.chargeAmpRefVoltage());
+        SetChargeAmplifierRef(config.chargeAmpRefVoltage());
 
-    if (vhdlVersion != NewVhdlVersion) {
-        printf("Expected vhdl version 0x%x, found 0x%x, old version is 0x%x\n", NewVhdlVersion, vhdlVersion, OldVhdlVersion);
-        config_ok = false;
-    }
-    unsigned multiplier = (unsigned) config.chargeAmpRange();
-    unsigned mult_chan0 = ((multiplier&0xf)+1)%0xf;  // Board interprets 0 as no capacitor
-    unsigned mult_chan1 = (((multiplier>>4)&0xf)+1)%0xf;
-    unsigned mult_chan2 = (((multiplier>>8)&0xf)+1)%0xf;
-    unsigned mult_chan3 = (((multiplier>>12)&0xf)+1)%0xf;
-    printf("Configuring gain with %d, %d, %d, %d\n", mult_chan0, mult_chan1, mult_chan2, mult_chan3);
-    if(mult_chan0*mult_chan1*mult_chan2*mult_chan3 == 0) {
-        printf("Do not understand gain configuration 0x%x, byte values restricted to 0-14\n", multiplier);
-        config_ok = false;
-    }
-    unsigned inputAmplifier_pF[4] = {mult_chan0, mult_chan1, mult_chan2, mult_chan3};
-    SetChargeAmplifierMultiplier(inputAmplifier_pF);
-    //  SetCalibrationVoltage(float calibrationVoltage);
-    SetInputBias(config.diodeBias());
-    SetChannelAcquisitionWindow(config.resetLength(), config.resetDelay());
-    SetTriggerDelay((unsigned) config.trigDelay());
-    SetTriggerPreSampleDelay(HardCodedPresampleDelay);
-    printf("Have hardcoded presample delay to %d us\n", HardCodedPresampleDelay/1000);
-    if ((HardCodedPresampleDelay+HardCodedTotalPresampleTime)>config.trigDelay()) {
-        config_ok = false;
-        printf("Sample delay %d is too short - must be at least %d earlier than %d\n", config.trigDelay(), HardCodedTotalPresampleTime, HardCodedPresampleDelay);
-    }
-    SetAdcDelay(HardCodedAdcDelay);
-    printf("Have hardcoded adc delay to %f us\n", float(HardCodedAdcDelay)/1000);
-    //  CalibrationStart((unsigned) config.calStrobeLength());
+        if (vhdlVersion != NewVhdlVersion) {
+            printf("Expected vhdl version 0x%x, found 0x%x, old version is 0x%x\n", NewVhdlVersion, vhdlVersion, OldVhdlVersion);
+            config_ok = false;
+        }
+        unsigned multiplier = (unsigned) config.chargeAmpRange();
+        unsigned mult_chan0 = ((multiplier&0xf)+1)%0xf;  // Board interprets 0 as no capacitor
+        unsigned mult_chan1 = (((multiplier>>4)&0xf)+1)%0xf;
+        unsigned mult_chan2 = (((multiplier>>8)&0xf)+1)%0xf;
+        unsigned mult_chan3 = (((multiplier>>12)&0xf)+1)%0xf;
+        printf("Configuring gain with %d, %d, %d, %d\n", mult_chan0, mult_chan1, mult_chan2, mult_chan3);
+        if(mult_chan0*mult_chan1*mult_chan2*mult_chan3 == 0) {
+            printf("Do not understand gain configuration 0x%x, byte values restricted to 0-14\n", multiplier);
+            config_ok = false;
+        }
+        unsigned inputAmplifier_pF[4] = {mult_chan0, mult_chan1, mult_chan2, mult_chan3};
+        SetChargeAmplifierMultiplier(inputAmplifier_pF);
+        //  SetCalibrationVoltage(float calibrationVoltage);
+        SetInputBias(config.diodeBias());
+        SetChannelAcquisitionWindow(config.resetLength(), config.resetDelay());
+        SetTriggerDelay((unsigned) config.trigDelay());
+        SetTriggerPreSampleDelay(HardCodedPresampleDelay);
+        printf("Have hardcoded presample delay to %d us\n", HardCodedPresampleDelay/1000);
+        if ((HardCodedPresampleDelay+HardCodedTotalPresampleTime)>config.trigDelay()) {
+            config_ok = false;
+            printf("Sample delay %d is too short - must be at least %d earlier than %d\n", config.trigDelay(), HardCodedTotalPresampleTime, HardCodedPresampleDelay);
+        }
+        SetAdcDelay(HardCodedAdcDelay);
+        printf("Have hardcoded adc delay to %f us\n", float(HardCodedAdcDelay)/1000);
+        //  CalibrationStart((unsigned) config.calStrobeLength());
 
-    config.setTriggerPreSampleDelay(HardCodedPresampleDelay);
-    config.setAdcDelay(HardCodedAdcDelay);
+        config.setTriggerPreSampleDelay(HardCodedPresampleDelay);
+        config.setAdcDelay(HardCodedAdcDelay);
 
-    config.setSerialID(GetSerialID());
-    config.setErrors(GetErrors());
-    config.setStatus((ReadRegister(status) & 0xffff0000)>>16);
+        config.setSerialID(GetSerialID());
+        config.setErrors(GetErrors());
+        config.setStatus((ReadRegister(status) & 0xffff0000)>>16);
   
-    config.dump();
+        config.dump();
 
-    printf("have flushed fd after IpimBoard configure\n");
-
-    return config_ok;
+        printf("have flushed fd after IpimBoard configure\n");
+    }
 }
 
 void IpimBoard::SetTriggerCounter(unsigned start0, unsigned start1)
