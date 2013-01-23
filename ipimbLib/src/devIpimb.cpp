@@ -230,6 +230,7 @@ static void ipimbConfigCallback(CALLBACK *pcallback)
         callbackRequestDelayed(&pdevdata->callback,1); /* Wait again! */
     } else {
         /* We're done, finish the record processing. */
+        pdevdata->pdevice->ipmBoard.RestoreTrigger();
         prset=(struct rset *)(pbi->rset);
         dbScanLock((struct dbCommon *)pbi);
         (*(int (*)(struct dbCommon *))prset->process)((struct dbCommon *)pbi);

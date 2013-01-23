@@ -129,9 +129,13 @@ extern "C" {
  */
 
 int ipimbConfigure(IPIMB_DEVICE  * pdevice);
-int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, uint16_t calibrationRange, uint32_t resetLength, uint16_t resetDelay,
-                           float chargeAmpRefVoltage, float calibrationVoltage, float diodeBias,
-                          uint16_t calStrobeLength, uint32_t trigDelay, uint32_t trigPsDelay, uint32_t adcDelay);
+int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, 
+                         uint16_t calibrationRange, uint32_t resetLength, 
+                         uint16_t resetDelay, float chargeAmpRefVoltage, 
+                         float calibrationVoltage, float diodeBias,
+                         uint16_t calStrobeLength, uint32_t trigDelay, 
+                         uint32_t trigPsDelay, uint32_t adcDelay,
+                         DBLINK *trig);
 IPIMB_DEVICE * ipimbFindDeviceByName(char * name);
 IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName);
     int		ipimbAdd(char * name, char * ttyName, char * mdestIP, unsigned int physID,

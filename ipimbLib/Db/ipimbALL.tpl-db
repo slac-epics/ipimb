@@ -89,7 +89,7 @@ record(bo,"$(RECNAME):DoConfig")
 {
    field(ONAM, "Configure")
    field(ZNAM, "---")
-   field(FLNK, "$(RECNAME):PreConfig")
+   field(FLNK, "$(RECNAME):Configure")
 }
 
 record(stringout,"$(RECNAME):BoxName")
@@ -104,7 +104,7 @@ record(calc,"$(RECNAME):ChargeAmpRange")
    field(INPC, "$(RECNAME):ChargeAmpRangeCH2.RVAL")
    field(INPD, "$(RECNAME):ChargeAmpRangeCH3.RVAL")
    field(CALC, "(D<<12)|(C<<8)|(B<<4)|A")
-   field(FLNK, "$(RECNAME):PreConfig")
+   field(FLNK, "$(RECNAME):Configure")
 }
 
 record(ao,"$(RECNAME):DiodeBias")
@@ -117,7 +117,7 @@ record(ao,"$(RECNAME):DiodeBias")
    field(LOPR, "0")
    field(VAL,  "30")
    field(EGU,  "Volt")
-   field(FLNK, "$(RECNAME):PreConfig")
+   field(FLNK, "$(RECNAME):Configure")
 }
 
 record(longout,"$(RECNAME):TrigDelay")
@@ -129,28 +129,14 @@ record(longout,"$(RECNAME):TrigDelay")
    field(LOPR, "40000")
    field(EGU,  "ns")
    field(VAL,  "250000")
-   field(FLNK, "$(RECNAME):PreConfig")
-}
-
-#
-# This reads and stores the current TRIGGER in VAL, while writing a 0 to the
-# TRIGGER to disable it.
-#
-record(calcout, "$(RECNAME):PreConfig")
-{
-   field(DESC, "Trigger Save and Disable")
-   field(SCAN, "Passive")
-   field(CALC, "A")
-   field(HOPR, "10")
-   field(LOPR, "0")
-   field(INPA, "$(TRIGGER)")
-   field(OUT, "$(TRIGGER) PP")
-   field(DOPT, "Use OCAL")
-   field(OCAL, "0")
-   field(IVOA, "Don't drive outputs")
    field(FLNK, "$(RECNAME):Configure")
 }
 
+#
+# This genSub does the IPIMB configuration.  It also remembers the current
+# trigger if we are not currently remembering a trigger, and turns the trigger
+# off.
+#
 record(genSub, "$(RECNAME):Configure") {
   field(DESC, "Configure IPIMB")
   field(SCAN, "Passive")
@@ -227,6 +213,10 @@ record(genSub, "$(RECNAME):Configure") {
   field(INPQ, "4000")
   field(FTQ,  "ULONG")
   field(NOQ,  "1")
+## Trigger enable
+  field(INPR, "$(TRIGGER)")
+  field(FTR,  "ULONG")
+  field(NOR,  "1")
 
 # Box name
   field(INPU, "$(RECNAME):BoxName")
@@ -234,23 +224,14 @@ record(genSub, "$(RECNAME):Configure") {
   field(FLNK, "$(RECNAME):WaitConfig")
 }
 
+#
+# This record doesn't finish processing until all outstanding configurations
+# are complete.  It also restores the saved trigger.
+#
 record(bi, "$(RECNAME):WaitConfig") {
   field(DESC, "Wait for Configuration")
   field(SCAN, "Passive")
   field(DTYP, "IPIMB")
   field(INP,  "@$(BOX):0:DATA")
   field(PRIO, "HIGH")
-  field(FLNK, "$(RECNAME):PostConfig")
-}
-
-record(calcout, "$(RECNAME):PostConfig")
-{
-   field(DESC, "Trigger Restore")
-   field(SCAN, "Passive")
-   field(CALC, "A")
-   field(HOPR, "10")
-   field(LOPR, "0")
-   field(INPA, "$(RECNAME):PreConfig")
-   field(OUT, "$(TRIGGER) PP")
-   field(IVOA, "Don't drive outputs")
 }

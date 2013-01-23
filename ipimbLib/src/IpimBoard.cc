@@ -206,6 +206,8 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned
     conf_in_progress = false;
     config_ok = false;
     config_gen = 0;
+    saved_trigger = -1;
+    db_trigger = NULL;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cmdready, NULL);
@@ -755,7 +757,12 @@ bool IpimBoard::configure(Ipimb::ConfigV2& config)
     newconfig = config;
     config_gen++;
     conf_in_progress = true;
-    printf("IPIMB%d requesting configuration generation %d\n", _physID, config_gen);
+    /* If we don't have a saved trigger, save its state and turn it off! */
+    if (saved_trigger == -1) {
+        long options = 0, nRequest = 1, newval = 0, tst = -1;
+        dbGetField(db_trigger, DBR_LONG, &saved_trigger, &options, &nRequest, NULL);
+        dbPutField(db_trigger, DBR_LONG, &newval, 1);
+    }
     pthread_cond_signal(&confreq); /* Wake up the configuration task */
     pthread_mutex_unlock(&mutex);
     return true;
@@ -1051,4 +1058,18 @@ void IpimBoard::CalibrationStart(unsigned calStrobeLength)
         return;
     }
     WriteRegister(cal_strobe, length);
+}
+
+void IpimBoard::SetTrigger(DBLINK *trig)
+{
+    if (!db_trigger)
+        db_trigger = dbGetPdbAddrFromLink(trig);
+}
+
+void IpimBoard::RestoreTrigger(void)
+{
+    pthread_mutex_lock(&mutex);
+    dbPutField(db_trigger, DBR_LONG, &saved_trigger, 1);
+    saved_trigger = -1;
+    pthread_mutex_unlock(&mutex);
 }

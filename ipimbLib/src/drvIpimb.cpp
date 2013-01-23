@@ -20,9 +20,13 @@ static int IPIMB_device_list_inited = 0;
 static IPIMB_DEVICE_LIST  IPIMB_device_list = { {NULL, NULL}, 0};
 static epicsMutexId        IPIMB_device_list_lock = NULL;
 
-int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, uint16_t calibrationRange, uint32_t resetLength, uint16_t resetDelay,
-                           float chargeAmpRefVoltage, float calibrationVoltage, float diodeBias,
-                          uint16_t calStrobeLength, uint32_t trigDelay, uint32_t trigPsDelay, uint32_t adcDelay)
+int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange,
+                         uint16_t calibrationRange, uint32_t resetLength,
+                         uint16_t resetDelay, float chargeAmpRefVoltage, 
+                         float calibrationVoltage, float diodeBias,
+                         uint16_t calStrobeLength, uint32_t trigDelay,
+                         uint32_t trigPsDelay, uint32_t adcDelay,
+                         DBLINK *trig)
 {
     IPIMB_DEVICE  * pdevice = NULL;
 
@@ -30,6 +34,8 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, uint16_t cal
     {
         return -1;
     }
+
+    pdevice->ipmBoard.SetTrigger(trig);
 
     Ipimb::ConfigV2 ipmConf(chargeAmpRange, calibrationRange, resetLength, resetDelay, chargeAmpRefVoltage,
                             calibrationVoltage, diodeBias, calStrobeLength, trigDelay, trigPsDelay, adcDelay);

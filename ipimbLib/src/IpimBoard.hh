@@ -12,6 +12,7 @@
 #include <time.h>
 #include <dbScan.h>
 #include <epicsTime.h>
+#include <dbAccess.h>
 
 #include "ConfigV2.hh"
 
@@ -205,6 +206,9 @@ namespace Pds {
 
         bool isConfiguring(void) { return conf_in_progress; }
         bool isConfigOK(void)    { return config_ok; }
+
+        void SetTrigger(DBLINK *trig);
+        void RestoreTrigger(void);
     
     private:
         int   _physID;               // Physical ID
@@ -232,6 +236,8 @@ namespace Pds {
         bool conf_in_progress;
         Ipimb::ConfigV2 newconfig;
         int config_gen;
+        DBADDR *db_trigger;
+        long saved_trigger;
     };
 }
 #endif
