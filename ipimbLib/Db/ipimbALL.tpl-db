@@ -120,6 +120,43 @@ record(ao,"$(RECNAME):DiodeBias")
    field(FLNK, "$(RECNAME):Configure")
 }
 
+record(ao,"$(RECNAME):RefVoltage")
+{
+   field(DESC, "Charge Amp Ref Voltage")
+   field(PREC, "4")
+   field(DRVH, "200")
+   field(DRVL, "0")
+   field(HOPR, "200")
+   field(LOPR, "0")
+   field(VAL,  "1")
+   field(EGU,  "Volt")
+   field(FLNK, "$(RECNAME):Configure")
+}
+
+record(longout,"$(RECNAME):AcqWindow")
+{
+   field(DESC, "Reset Length")
+   field(DRVH, "2000000")
+   field(DRVL, "0")
+   field(HOPR, "2000000")
+   field(LOPR, "0")
+   field(EGU,  "ns")
+   field(VAL,  "600000")
+   field(FLNK, "$(RECNAME):Configure")
+}
+
+record(longout,"$(RECNAME):ResetDelay")
+{
+   field(DESC, "Reset Delay")
+   field(DRVH, "500000")
+   field(DRVL, "0")
+   field(HOPR, "500000")
+   field(LOPR, "0")
+   field(EGU,  "ns")
+   field(VAL,  "4095")
+   field(FLNK, "$(RECNAME):Configure")
+}
+
 record(longout,"$(RECNAME):TrigDelay")
 {
    field(DESC, "Trig Delay")
@@ -169,16 +206,16 @@ record(genSub, "$(RECNAME):Configure") {
   field(INPF, "0")
   field(FTF,  "USHORT")
   field(NOF,  "1")
-## RstLength (leave as default)
-  field(INPG, "600000")
+## RstLength, user set
+  field(INPG, "$(RECNAME):AcqWindow")
   field(FTG,  "ULONG")
   field(NOG,  "1")
-## RstDelay (leave as default)
-  field(INPH, "4095")
+## RstDelay, user set
+  field(INPH, "$(RECNAME):ResetDelay")
   field(FTH,  "USHORT")
   field(NOH,  "1")
-## ChargeAmpRefV (leave as default)
-  field(INPI, "1")
+## ChargeAmpRefV, user set
+  field(INPI, "$(RECNAME):RefVoltage")
   field(FTI,  "FLOAT")
   field(NOI,  "1")
 ## CaliV (no need so far)
