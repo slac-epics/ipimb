@@ -164,7 +164,7 @@ static void *ipimb_configure_body(void *p)
 }
 
 IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned long* trigger,
-                     unsigned long *gen)
+                     unsigned long *gen, int polarity)
 {
     size_t stacksize;
     struct termios newtio;
@@ -175,6 +175,7 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned
     _ioscan = ioscan;
     _trigger = trigger;
     _gen = gen;
+    _polarity = polarity;
 
     memset(&newtio, 0, sizeof(newtio));
         
@@ -345,7 +346,7 @@ void IpimBoard::do_read()
             if (!COMMAND(rdbuf[0])) {
                 if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d is flushing expected data packet 0x%llx.\n",
-                           _physID, expected_cnt);
+                           _physID, (long long unsigned int) expected_cnt);
                     fflush(stdout);
                 }
                 expected_cnt++;
@@ -555,13 +556,13 @@ void IpimBoard::do_read()
             cbuf = cbuf ? 0 : 1;
             pthread_cond_signal(&cmdready); /* Wake up whoever did the read! */
             if (DBG_ENABLED(DEBUG_READER|DEBUG_DATA)) {
-                fprintf(stderr, "IPIMB%d: Got command response packet (gen=%d, _gen=%d, trigevent=%d, _trigger=%d, eventvalid=%d).\n",
+                fprintf(stderr, "IPIMB%d: Got command response packet (gen=%d, _gen=%ld, trigevent=%d, _trigger=%ld, eventvalid=%d).\n",
                         _physID, gen, *_gen, trigevent, *_trigger, eventvalid);
             }
             pthread_mutex_unlock(&mutex);
         } else {
             IpimBoardData *d = new (_data[dbuf]) IpimBoardData();
-            d->adjustdata();
+            d->adjustdata(_polarity);
 
             if (DBG_ENABLED(DEBUG_READER|DEBUG_DATA)) {
                 fprintf(stderr, "IPIMB%d: Got data packet in %d.\n", _physID, dbuf);
@@ -572,7 +573,8 @@ void IpimBoard::do_read()
             if (current_cnt != expected_cnt) {
                 if (DBG_ENABLED(DEBUG_TC)) {
                     printf("IPIMB%d trigger count: expected 0x%llx, have 0x%llx.\n", 
-                           _physID, expected_cnt, current_cnt);
+                           _physID, (long long unsigned int)expected_cnt,
+                           (long long unsigned int) current_cnt);
                     fflush(stdout);
                 }
                 incr = current_cnt - expected_cnt + 1;
@@ -611,7 +613,8 @@ void IpimBoard::do_read()
                     } else {
                         if (DBG_ENABLED(DEBUG_TC)) {
                             printf("IPIMB%d is fully resynched with index %lld at fiducial 0x%x (lastfid = 0x%x), current packet=0x%llx.\n",
-                                   _physID, idx, ts[dbuf].nsec & 0x1ffff, lastfid, current_cnt);
+                                   _physID, idx, ts[dbuf].nsec & 0x1ffff, lastfid, 
+                                   (long long unsigned int) current_cnt);
                             fflush(stdout);
                         }
                     }
@@ -619,7 +622,8 @@ void IpimBoard::do_read()
                 } else {
                     if (DBG_ENABLED(DEBUG_TC_V)) {
                         printf("IPIMB%d: idx %lld, fid 0x%x, pkt 0x%llx.\n",
-                               _physID, idx, ts[dbuf].nsec & 0x1ffff, current_cnt);
+                               _physID, idx, ts[dbuf].nsec & 0x1ffff,
+                               (long long unsigned int) current_cnt);
                         fflush(stdout);
                     }
                 }
@@ -759,7 +763,7 @@ bool IpimBoard::configure(Ipimb::ConfigV2& config)
     conf_in_progress = true;
     /* If we don't have a saved trigger, save its state and turn it off! */
     if (saved_trigger == -1) {
-        long options = 0, nRequest = 1, newval = 0, tst = -1;
+        long options = 0, nRequest = 1, newval = 0;
         dbGetField(db_trigger, DBR_LONG, &saved_trigger, &options, &nRequest, NULL);
         dbPutField(db_trigger, DBR_LONG, &newval, 1);
     }

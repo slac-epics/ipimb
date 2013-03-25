@@ -36,14 +36,16 @@ extern int IPIMB_DEV_DEBUG;
 /* define function flags */
 typedef enum {
         IPIMB_AI_DATA,
+        IPIMB_AI_PS,
 } IPIMBFUNC;
 
 static struct PARAM_MAP
 {
         char param[MAX_CA_STRING_SIZE];
         int  funcflag;
-} param_map[1] = {
-    {"DATA", IPIMB_AI_DATA}
+} param_map[2] = {
+    {"DATA", IPIMB_AI_DATA},
+    {"PS",   IPIMB_AI_PS}
 };
 #define N_PARAM_MAP (sizeof(param_map)/sizeof(struct PARAM_MAP))
 
@@ -134,7 +136,7 @@ long init_ai( struct aiRecord * pai)
         pai->pact=TRUE;
         return (S_db_badField);
     }
-    pai->eslo = (pai->eguf - pai->egul)/(float)0x10000;
+    pai->eslo = (pai->eguf - pai->egul)/(float)0xffff;
     pai->roff = 0x0;
 
     if(IPIMB_DevData_Init((dbCommon *) pai, pai->inp.value.instio.string) != 0)
@@ -167,11 +169,6 @@ long read_ai(struct aiRecord *pai)
     switch(pdevdata->funcflag) {
     case IPIMB_AI_DATA:
         if (ipmData) {
-            /*
-             * OK, the DAQ does an extra computation between the presample and channel readings.
-             * They usually set polarity = 0 and baselinesubtration = 1, which converts to the
-             * calculation we have here.
-             */
             switch(pdevdata->chnlnum) {
             case 0:
                 memcpy(&pdevdata->pdevice->ipmData, ipmData, sizeof(IpimBoardData)); // Remember this!
@@ -186,6 +183,27 @@ long read_ai(struct aiRecord *pai)
             case 3:
             default:
                 pai->rval = ipmData->ch3;
+                break;
+            }
+        } else
+            pai->rval = 0;
+        status = ipmData ? 0 : -1;
+        break;
+    case IPIMB_AI_PS:
+        if (ipmData) {
+            switch(pdevdata->chnlnum) {
+            case 0:
+                pai->rval = ipmData->ch0_ps;
+                break;
+            case 1:
+                pai->rval = ipmData->ch1_ps;
+                break;
+            case 2:
+                pai->rval = ipmData->ch2_ps;
+                break;
+            case 3:
+            default:
+                pai->rval = ipmData->ch3_ps;
                 break;
             }
         } else

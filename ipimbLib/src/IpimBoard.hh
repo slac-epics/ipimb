@@ -83,24 +83,67 @@ namespace Pds {
         uint64_t triggerCounter() {
             return (((uint64_t)tc[0]) << 48) | (((uint64_t)tc[1]) << 32) | (((uint64_t)tc[2]) << 16) | tc[3];
         }
-        void adjustdata() {
-            if (ch0_ps > ch0)
-                ch0 = 65535 + ch0 - ch0_ps;
-            else
-                ch0 = 65535;
-            if (ch1_ps > ch1)
-                ch1 = 65535 + ch1 - ch1_ps;
-            else
-                ch1 = 65535;
-            if (ch2_ps > ch2)
-                ch2 = 65535 + ch2 - ch2_ps;
-            else
-                ch2 = 65535;
-            if (ch3_ps > ch3)
-                ch3 = 65535 + ch3 - ch3_ps;
-            else
-                ch3 = 65535;
-
+        void adjustdata(int polarity) {
+            /*
+             * Long explanation of what is going on here...
+             *
+             * When the DAQ converts from IpimBoardPsData to IpimBoardData,
+             * if baselinesubtraction is 1 (the default), it calculates:
+             *
+             *     diff = max(0, int(-1*polarity*presample + polarity*samplechannel[i]))
+             *     if (polarity == 1)
+             *         return diff;
+             *     else
+             *         return 65535 - diff
+             *
+             * Now, we can simplify this somewhat:
+             *     max(0, int(-1*polarity*presample + polarity*samplechannel[i])) = 
+             *     max(0, polarity * int(samplechannel[i] - presample))
+             * So if polarity == 1, we return:
+             *     max(0, int(samplechannel[i] - presample)) = 
+             *     (presample < samplechannel[i]) ? (samplechannel[i] - presample) : 0
+             * And if polarity == -1, we return:
+             *     65535 - max(0, -1 * int(samplechannel[i] - presample))
+             *     65535 + min(0, int(samplechannel[i] - presample)) =
+             *     (presample > samplechannel[i]) ? (65535 + samplechannel[i] - presample) : 65535
+             *
+             * We are always assuming that baselinesubtraction == 1 here.
+             */
+            if (polarity == -1) {
+                if (ch0_ps > ch0)
+                    ch0 = 65535 + ch0 - ch0_ps;
+                else
+                    ch0 = 65535;
+                if (ch1_ps > ch1)
+                    ch1 = 65535 + ch1 - ch1_ps;
+                else
+                    ch1 = 65535;
+                if (ch2_ps > ch2)
+                    ch2 = 65535 + ch2 - ch2_ps;
+                else
+                    ch2 = 65535;
+                if (ch3_ps > ch3)
+                    ch3 = 65535 + ch3 - ch3_ps;
+                else
+                    ch3 = 65535;
+            } else {
+                if (ch0_ps < ch0)
+                    ch0 = ch0 - ch0_ps;
+                else
+                    ch0 = 0;
+                if (ch1_ps < ch1)
+                    ch1 = ch1 - ch1_ps;
+                else
+                    ch1 = 0;
+                if (ch2_ps < ch2)
+                    ch2 = ch2 - ch2_ps;
+                else
+                    ch2 = 0;
+                if (ch3_ps < ch3)
+                    ch3 = ch3 - ch3_ps;
+                else
+                    ch3 = 0;
+            }
         }
         uint16_t tc[4];
         uint16_t config0;
@@ -166,7 +209,7 @@ namespace Pds {
         };
 
         IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned long *trigger,
-                  unsigned long *gen);
+                  unsigned long *gen, int polarity);
         ~IpimBoard();
 
         int get_fd();
@@ -216,6 +259,7 @@ namespace Pds {
         char* _serialDevice;         // Name of serial port
         unsigned long*  _trigger;    // PV with event number of trigger
         unsigned long*  _gen;        // PV with generation number of trigger
+        int   _polarity;             // Polarity -1 = negative-going, 1 = positive-going
         IOSCANPVT *_ioscan;
         bool  config_ok;
         

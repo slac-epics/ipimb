@@ -18,8 +18,8 @@ ConfigV2::~ConfigV2() {}
 
 void ConfigV2::dump() const {
   printf("------Ipimb Config-------------\n");
-  printf("Trigger counter 0x%llx\n", triggerCounter());
-  printf("Serial ID 0x%llx\n", serialID());
+  printf("Trigger counter 0x%llx\n", (long long unsigned int) triggerCounter());
+  printf("Serial ID 0x%llx\n", (long long unsigned int) serialID());
   printf("Charge amp settings 0x%x\n", chargeAmpRange());
   printf("Calibration range   0x%x\n", calibrationRange());
   printf("Reset length %ld ns\n", (unsigned long)resetLength());

@@ -51,13 +51,14 @@ static const iocshArg ipimbAddArg2 = {"mdestIP", iocshArgString};
 static const iocshArg ipimbAddArg3 = {"physID", iocshArgInt};
 static const iocshArg ipimbAddArg4 = {"datatype", iocshArgInt};
 static const iocshArg ipimbAddArg5 = {"trigger", iocshArgString};
-static const iocshArg *const ipimbAddArgs[6] = {&ipimbAddArg0, &ipimbAddArg1, &ipimbAddArg2, &ipimbAddArg3,
-                                                &ipimbAddArg4, &ipimbAddArg5};
-static const iocshFuncDef ipimbAddDef = {"ipimbAdd", 6, ipimbAddArgs};
+static const iocshArg ipimbAddArg6 = {"polarity", iocshArgInt};
+static const iocshArg *const ipimbAddArgs[7] = {&ipimbAddArg0, &ipimbAddArg1, &ipimbAddArg2, &ipimbAddArg3,
+                                                &ipimbAddArg4, &ipimbAddArg5, &ipimbAddArg6};
+static const iocshFuncDef ipimbAddDef = {"ipimbAdd", 7, ipimbAddArgs};
 static void ipimbAddCall(const iocshArgBuf * args) {
     ipimbAdd( (char *)(args[0].sval), (char *)(args[1].sval), (char *)(args[2].sval),
               (unsigned int) args[3].ival, (unsigned int) args[4].ival,
-              (char *)(args[5].sval));
+              (char *)(args[5].sval), args[6].ival ? 1 : -1);
 }
 
 void drvIPIMB_Register() {

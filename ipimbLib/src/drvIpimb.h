@@ -100,8 +100,8 @@ public:
 
 public:
     IPIMB_DEVICE(char * ipmName, char *ipmTtyName, char * ipmMdestIP, int physID, unsigned long *trigger,
-                 unsigned long *gen)
-        : ipmBoard(ipmTtyName, &ioscan, physID, trigger, gen), ipmData()
+                 unsigned long *gen, int polarity)
+        : ipmBoard(ipmTtyName, &ioscan, physID, trigger, gen, polarity), ipmData()
     {
         name = epicsStrDup(ipmName);
         ttyName = epicsStrDup(ipmTtyName);
@@ -139,7 +139,7 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange,
 IPIMB_DEVICE * ipimbFindDeviceByName(char * name);
 IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName);
     int		ipimbAdd(char * name, char * ttyName, char * mdestIP, unsigned int physID,
-                         unsigned int dtype, char *trigger );
+                         unsigned int dtype, char *trigger, int polarity );
 
 #ifdef	__cplusplus
 }

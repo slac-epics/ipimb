@@ -17,6 +17,24 @@ record(ai, "$(RECNAME):CH$(CHANNEL)_RAW") {
   field(EGU,  "Volt")
   field(LINR, "LINEAR")
   field(TSE,  "-2")
+  field(FLNK, "$(RECNAME):CH$(CHANNEL)_PS")
+}
+
+record(ai, "$(RECNAME):CH$(CHANNEL)_PS") {
+  field(DESC, "Analog Input Presample")
+  field(SCAN, "Passive")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):$(CHANNEL):PS")
+  field(PREC, "4")
+  field(PRIO, "HIGH")
+  field(EGUF, "5")
+  field(EGUL, "0")
+  field(HOPR, "5")
+  field(LOPR, "0")
+  field(MDEL, "-1")
+  field(EGU,  "Volt")
+  field(LINR, "LINEAR")
+  field(TSEL, "$(RECNAME):CH$(CHANNEL)_RAW.TIME")
   field(FLNK, "$(RECNAME):CH$(CHANNEL)")
 }
 

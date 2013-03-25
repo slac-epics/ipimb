@@ -115,7 +115,7 @@ static int ipimbSetPv(int iPvIndex, void* pPvValue, void* payload)
 }
 
 int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype,
-                  char *trigger)
+                  char *trigger, int polarity)
 {
     IPIMB_DEVICE  * pdevice = NULL;
     DBADDR trigaddr;
@@ -144,13 +144,13 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     // TODO: mdestIP needs to check and convert and setup
     if (dbNameToAddr(trigger, &trigaddr)) {
         printf("No PV trigger named %s, using constant event 140!\n", trigger);
-        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140);
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140, polarity);
     } else {
         unsigned long *trig = (unsigned long *) trigaddr.pfield;
         printf("Found PV trigger for IPIMB%d %s at %p (gen at %p)\n", 
                physID, trigger, trig, trig + MAX_EV_TRIGGERS);
         pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID,
-                                   trig, trig + MAX_EV_TRIGGERS);
+                                   trig, trig + MAX_EV_TRIGGERS, polarity);
     }
 
     /* Add to the device linked list */
