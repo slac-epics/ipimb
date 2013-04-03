@@ -161,7 +161,7 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     BldRegister(physID, dtype, sizeof(IpimBoardData) + sizeof(Ipimb::ConfigV2) + sizeof(Lusi::IpmFexV1),
                 ipimbSetPv);
 
-    printf( "ipimb box [%s] at [%s] added.\n", name, ttyName );
+    printf( "ipimb box [%s] at [%s] added (polarity = %d).\n", name, ttyName, polarity );
     return(0);
 }
 
