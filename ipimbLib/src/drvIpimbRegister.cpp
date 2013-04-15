@@ -58,7 +58,7 @@ static const iocshFuncDef ipimbAddDef = {"ipimbAdd", 7, ipimbAddArgs};
 static void ipimbAddCall(const iocshArgBuf * args) {
     ipimbAdd( (char *)(args[0].sval), (char *)(args[1].sval), (char *)(args[2].sval),
               (unsigned int) args[3].ival, (unsigned int) args[4].ival,
-              (char *)(args[5].sval), args[6].ival ? 1 : -1);
+              (char *)(args[5].sval), args[6].ival);
 }
 
 void drvIPIMB_Register() {

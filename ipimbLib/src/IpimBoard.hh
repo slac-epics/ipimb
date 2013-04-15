@@ -107,8 +107,11 @@ namespace Pds {
              *     65535 + min(0, int(samplechannel[i] - presample)) =
              *     (presample > samplechannel[i]) ? (65535 + samplechannel[i] - presample) : 65535
              *
-             * We are always assuming that baselinesubtraction == 1 here.
+             * If polarity == 0, we just skip all of this mess and don't do any
+             * baseline subtraction at all.
              */
+            if (!polarity)
+                return;
             if (polarity == -1) {
                 if (ch0_ps > ch0)
                     ch0 = 65535 + ch0 - ch0_ps;
@@ -259,7 +262,8 @@ namespace Pds {
         char* _serialDevice;         // Name of serial port
         unsigned long*  _trigger;    // PV with event number of trigger
         unsigned long*  _gen;        // PV with generation number of trigger
-        int   _polarity;             // Polarity -1 = negative-going, 1 = positive-going
+        int   _polarity;             // -1 = negative-going, 1 = positive-going,
+                                     //  0 = no baseline subtraction.
         IOSCANPVT *_ioscan;
         bool  config_ok;
         

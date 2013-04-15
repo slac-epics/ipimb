@@ -121,6 +121,35 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     DBADDR trigaddr;
     static unsigned long ev140 = 140;
 
+    /*
+     * Sigh.  The joys of backwards compatibility.
+     *
+     * So, we want to have the ability to support negative-going signals (default),
+     * positive-going signals, or no baseline subtraction at all.  The obvious
+     * parameter values would be -1, 1, and 0, respectively.  But, we have st.cmd
+     * files that don't supply a polarity parameter, which ends up being interpreted
+     * as 0.  Therefore, 0 has to mean negative-going.
+     *
+     * So, we let 1 be positive-going, and 2 be no baseline subtraction, and remap
+     * the values here.
+     */
+    switch (polarity) {
+    case 0:
+        polarity = -1;
+        break;
+    case 1:
+        polarity = 1;
+        break;
+    case 2:
+        polarity = 0;
+        break;
+    default:
+        printf("Unknown polarity %d for %s, defaulting to negative polarity.\n",
+               polarity, name);
+        polarity = -1;
+        break;
+    }
+
     if(!IPIMB_device_list_inited)
     {
         ellInit((ELLLIST *) & IPIMB_device_list);
@@ -161,7 +190,7 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     BldRegister(physID, dtype, sizeof(IpimBoardData) + sizeof(Ipimb::ConfigV2) + sizeof(Lusi::IpmFexV1),
                 ipimbSetPv);
 
-    printf( "ipimb box [%s] at [%s] added (polarity = %d).\n", name, ttyName, polarity );
+    printf( "ipimb box [%s] at [%s] added (polarity = %d).\n", name, ttyName, polarity);
     return(0);
 }
 
