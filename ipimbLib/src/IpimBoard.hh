@@ -13,6 +13,7 @@
 #include <dbScan.h>
 #include <epicsTime.h>
 #include <dbAccess.h>
+#include <pthread.h>
 
 #include "ConfigV2.hh"
 
@@ -252,6 +253,8 @@ namespace Pds {
 
         bool isConfiguring(void) { return conf_in_progress; }
         bool isConfigOK(void)    { return config_ok; }
+        void lock(void)          { pthread_mutex_lock(&mutex); }
+        void unlock(void)        { pthread_mutex_unlock(&mutex); }
 
         void SetTrigger(DBLINK *trig);
         void RestoreTrigger(void);
@@ -284,8 +287,8 @@ namespace Pds {
         bool conf_in_progress;
         Ipimb::ConfigV2 newconfig;
         int config_gen;
-        DBADDR *db_trigger;
-        long saved_trigger;
+        int trigger_index;
+        int trigger_user;
     };
 }
 #endif

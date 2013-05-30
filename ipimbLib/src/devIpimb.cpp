@@ -244,11 +244,14 @@ static void ipimbConfigCallback(CALLBACK *pcallback)
     callbackGetUser(puser,pcallback);
     pbi = (struct biRecord *)puser;
     pdevdata = (IPIMB_DEVDATA *)(pbi->dpvt);
+    pdevdata->pdevice->ipmBoard.lock();
     if (pdevdata->pdevice->ipmBoard.isConfiguring()) {
         callbackRequestDelayed(&pdevdata->callback,1); /* Wait again! */
+        pdevdata->pdevice->ipmBoard.unlock();
     } else {
         /* We're done, finish the record processing. */
         pdevdata->pdevice->ipmBoard.RestoreTrigger();
+        pdevdata->pdevice->ipmBoard.unlock();
         prset=(struct rset *)(pbi->rset);
         dbScanLock((struct dbCommon *)pbi);
         (*(int (*)(struct dbCommon *))prset->process)((struct dbCommon *)pbi);
@@ -287,6 +290,7 @@ long read_bi(struct aiRecord *pbi)
 {
     IPIMB_DEVDATA * pdevdata = (IPIMB_DEVDATA *)(pbi->dpvt);
 
+    pdevdata->pdevice->ipmBoard.lock();
     if (pdevdata->pdevice->ipmBoard.isConfiguring()) {
         pbi->pact = TRUE;
         callbackRequestDelayed(&pdevdata->callback,1); /* Wait a second for configuration */
@@ -296,6 +300,7 @@ long read_bi(struct aiRecord *pbi)
         printf("\n!!! ipimbConfigProc [%s] was finished for ipimb box [%s], config_ok=%d !!!\n",
                pbi->name, pdevdata->pdevice->name, pbi->rval);
     }
+    pdevdata->pdevice->ipmBoard.unlock();
 
     pbi->udf=FALSE;
     return 2; /* No convert */

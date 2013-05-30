@@ -51,6 +51,15 @@ extern int IPIMB_BRD_ID;
 #define DBG_ENABLED(flag)  ((IPIMB_BRD_ID == -1 || IPIMB_BRD_ID == _physID) && \
                             (IPIMB_BRD_DEBUG & (flag)))
 
+static pthread_mutex_t trigger_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct trigger {
+    char   name[256];
+    int    use_cnt;
+    long   saved_trigger;
+    DBADDR db_trigger;
+} triggers[32];
+static int trigger_count = 0;
+
 static unsigned CRC(unsigned short* lst, int length, int _physID)
 {
     unsigned crc = 0xffff;
@@ -207,8 +216,8 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned
     conf_in_progress = false;
     config_ok = false;
     config_gen = 0;
-    saved_trigger = -1;
-    db_trigger = NULL;
+    trigger_index = -1;
+    trigger_user  = 0;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cmdready, NULL);
@@ -761,12 +770,19 @@ bool IpimBoard::configure(Ipimb::ConfigV2& config)
     newconfig = config;
     config_gen++;
     conf_in_progress = true;
-    /* If we don't have a saved trigger, save its state and turn it off! */
-    if (saved_trigger == -1) {
-        long options = 0, nRequest = 1, newval = 0;
-        dbGetField(db_trigger, DBR_LONG, &saved_trigger, &options, &nRequest, NULL);
-        dbPutField(db_trigger, DBR_LONG, &newval, 1);
+    /* Check if we are using the trigger data structure already! */
+    pthread_mutex_lock(&trigger_mutex);
+    if (trigger_user == 0) {
+        if (triggers[trigger_index].use_cnt++ == 0) {
+            /* If we're the first one in, save the trigger state and turn it off! */
+            long options = 0, nRequest = 1, newval = 0;
+            dbGetField(&triggers[trigger_index].db_trigger, DBR_LONG, 
+                       &triggers[trigger_index].saved_trigger, &options, &nRequest, NULL);
+            dbPutField(&triggers[trigger_index].db_trigger, DBR_LONG, &newval, 1);
+        }
+        trigger_user = 1;
     }
+    pthread_mutex_unlock(&trigger_mutex);
     pthread_cond_signal(&confreq); /* Wake up the configuration task */
     pthread_mutex_unlock(&mutex);
     return true;
@@ -1066,14 +1082,40 @@ void IpimBoard::CalibrationStart(unsigned calStrobeLength)
 
 void IpimBoard::SetTrigger(DBLINK *trig)
 {
-    if (!db_trigger)
-        db_trigger = dbGetPdbAddrFromLink(trig);
+    int i;
+    char *name;
+
+    if (trigger_index < 0) {
+        if (trig->type != DB_LINK) {
+            printf("IpimBoard error: trigger link does not point to PV?\n");
+            return;
+        }
+        name = trig->value.pv_link.pvname;
+        pthread_mutex_lock(&trigger_mutex);
+        for (i = 0; i < trigger_count; i++)
+            if (!strcmp(name, triggers[i].name))
+                break;
+        if (i == trigger_count) { /* It's new! */
+            strcpy(triggers[i].name, name);
+            triggers[i].use_cnt = 0;
+            triggers[i].saved_trigger = -1;
+            dbNameToAddr(triggers[i].name, &triggers[i].db_trigger);
+            trigger_count++;
+        }
+        trigger_index = i;
+        pthread_mutex_unlock(&trigger_mutex);
+    }
 }
 
+/* We assume that we already have the IpimBoard mutex here! */
 void IpimBoard::RestoreTrigger(void)
 {
-    pthread_mutex_lock(&mutex);
-    dbPutField(db_trigger, DBR_LONG, &saved_trigger, 1);
-    saved_trigger = -1;
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_lock(&trigger_mutex);
+    if (--triggers[trigger_index].use_cnt == 0) {
+        /* Last one out, turn off the lights! */
+        dbPutField(&triggers[trigger_index].db_trigger, DBR_LONG,
+                   &triggers[trigger_index].saved_trigger, 1);
+    }
+    trigger_user = 0;
+    pthread_mutex_unlock(&trigger_mutex);
 }
