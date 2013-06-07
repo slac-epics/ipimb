@@ -97,6 +97,7 @@ record(mbbo,"$(RECNAME):ChargeAmpRangeCH$(CHANNEL)")
   field(FTVL, "14")
   field(FTST, "14nF, All Close")
   field(FLNK, "$(RECNAME):ChargeAmpRangeFanout$(CHANNEL)")
+  field(PINI, "YES")
 }
 
 record(fanout, "$(RECNAME):ChargeAmpRangeFanout$(CHANNEL)")
