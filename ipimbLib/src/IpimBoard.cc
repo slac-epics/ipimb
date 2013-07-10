@@ -428,7 +428,7 @@ void IpimBoard::do_read()
                  * We must have prematurely rotated the timestamp buffers.  As long
                  * as we are close, nothing is seriously wrong here.
                  */
-                if (FID_DIFF(newfid, savefid) > 2) {
+                if (FID_DIFF(newfid, savefid) >= 2) {
                     printf("IPIMB%d is looking into the distant future?!?\n", _physID);
                     fflush(stdout);
                     /*
@@ -438,66 +438,48 @@ void IpimBoard::do_read()
                     flush();
                     continue;
                 }
-
+            } else {
                 /*
-                 * Go back one event.
+                 * Our trigger was close to savefid, but the timestamps have not been rotated
+                 * yet.  Wait for them to rotate until we get something close!
                  */
-                status = evrTimeGetFifo(&evt_time, trigevent, &idx, -1);
-                newfid = evt_time.nsec & 0x1ffff;
-                if (newfid == 0x1ffff) {
+                while (FID_DIFF(savefid, newfid) > 2) {
+                    unsigned long long idx2;
                     if (DBG_ENABLED(DEBUG_TC)) {
-                        printf("IPIMB%d resync sees a bad fiducial, restarting!\n", _physID);
+                        printf("IPIMB%d has savefid=0x%x, newfid=0x%x, idx=%lld.  Waiting...\n",
+                               _physID, savefid, newfid, idx);
+                        fflush(stdout);
+                    }
+                    do
+                        status = evrTimeGetFifo(&evt_time, trigevent, &idx2, MAX_TS_QUEUE);
+                    while (idx == idx2 || gen != *_gen);
+                    idx = idx2;
+                    newfid = evt_time.nsec & 0x1ffff;
+                    if (gen != *_gen || newfid == 0x1ffff) {
+                        if (DBG_ENABLED(DEBUG_TC)) {
+                            printf("IPIMB%d loop broken by reconfig or bad fiducial, restarting.\n",
+                                   _physID);
+                            fflush(stdout);
+                        }
+                        break;
+                    } else {
+                        if (DBG_ENABLED(DEBUG_TC)) {
+                            printf("IPIMB%d loop has idx=%lld, newfid=0x%x\n", 
+                                   _physID, idx, newfid);
+                            fflush(stdout);
+                        }
+                    }
+                }
+                if (gen != *_gen || newfid == 0x1ffff) {
+                    /* This is just bad.  Flush and hope for better the next time we're here. */
+                    if (DBG_ENABLED(DEBUG_TC)) {
+                        printf("IPIMB%d resync failed with fiducial 0x%x, restarting!\n",
+                               _physID, (evt_time.nsec & 0x1ffff));
                         fflush(stdout);
                     }
                     flush();
                     continue;
                 }
-                if (DBG_ENABLED(DEBUG_TC)) {
-                    printf("IPIMB%d is moving back to timestamp fiducial 0x%x at index %lld.\n",
-                           _physID, newfid, idx);
-                    fflush(stdout);
-                }
-            }
-            /*
-             * Our trigger was close to savefid, but the timestamps have not been rotated
-             * yet.  Wait for them to rotate until we get something close!
-             */
-            while (FID_DIFF(savefid, newfid) > 2) {
-                unsigned long long idx2;
-                if (DBG_ENABLED(DEBUG_TC)) {
-                    printf("IPIMB%d has savefid=0x%x, newfid=0x%x, idx=%lld.  Waiting...\n",
-                           _physID, savefid, newfid, idx);
-                    fflush(stdout);
-                }
-                do
-                    status = evrTimeGetFifo(&evt_time, trigevent, &idx2, MAX_TS_QUEUE);
-                while (idx == idx2 || gen != *_gen);
-                idx = idx2;
-                newfid = evt_time.nsec & 0x1ffff;
-                if (gen != *_gen || newfid == 0x1ffff) {
-                    if (DBG_ENABLED(DEBUG_TC)) {
-                        printf("IPIMB%d loop broken by reconfig or bad fiducial, restarting.\n",
-                               _physID);
-                        fflush(stdout);
-                    }
-                    break;
-                } else {
-                    if (DBG_ENABLED(DEBUG_TC)) {
-                        printf("IPIMB%d loop has idx=%lld, newfid=0x%x\n", 
-                               _physID, idx, newfid);
-                        fflush(stdout);
-                    }
-                }
-            }
-            if (gen != *_gen || newfid == 0x1ffff) {
-                /* This is just bad.  Flush and hope for better the next time we're here. */
-                if (DBG_ENABLED(DEBUG_TC)) {
-                    printf("IPIMB%d resync failed with fiducial 0x%x, restarting!\n",
-                           _physID, (evt_time.nsec & 0x1ffff));
-                    fflush(stdout);
-                }
-                flush();
-                continue;
             }
             /*
              * We should probably check that we are, indeed, close.  What if newfid skipped
@@ -619,7 +601,20 @@ void IpimBoard::do_read()
                             fflush(stdout);
                         }
                         in_sync = 0;
+                    } else if (FID_DIFF(lastfid, ts[dbuf].nsec & 0x1ffff) >= 2) {
+                        /*
+                         * We're way off, when we didn't expect to be.  Let's do this
+                         * again, shall we?
+                         */
+                        if (DBG_ENABLED(DEBUG_TC)) {
+                            printf("IPIMB%d recynch failed with index %lld at fiducial 0x%x (lastfid = 0x%x), current packet=0x%llx, retrying!\n",
+                                   _physID, idx, ts[dbuf].nsec & 0x1ffff, lastfid, 
+                                   (long long unsigned int) current_cnt);
+                            fflush(stdout);
+                        }
+                        in_sync = 0;
                     } else {
+                        /* Success!!! */
                         if (DBG_ENABLED(DEBUG_TC)) {
                             printf("IPIMB%d is fully resynched with index %lld at fiducial 0x%x (lastfid = 0x%x), current packet=0x%llx.\n",
                                    _physID, idx, ts[dbuf].nsec & 0x1ffff, lastfid, 
