@@ -60,8 +60,7 @@ file evrPmcEvent.template
 	{ $(EVR),	0,	EVENT5,  43,   0, 0, 0, 0, "10Hz",         "$(EVR):Triggers" }
 	{ $(EVR),	0,	EVENT6,  44,   0, 0, 0, 0, "5Hz",          "$(EVR):Triggers" }
 	{ $(EVR),	0,	EVENT7,  45,   0, 0, 0, 0, "1Hz",          "$(EVR):Triggers" }
-#	{ $(EVR),	0,	EVENT8,  46,   0, 0, 0, 0, "0.5Hz",        "$(EVR):Triggers" }
-	{ $(EVR),	0,	EVENT8,	 40,   0, 0, 0, 0, "120Hz",        "$(EVR):Triggers" }
+	{ $(EVR),	0,	EVENT8,  46,   0, 0, 0, 0, "0.5Hz",        "$(EVR):Triggers" }
  	{ $(EVR),	0,	EVENT9,  13,   0, 0, 0, 0, "TS1 10Hz",     "$(EVR):Triggers" }
  	{ $(EVR),	0,	EVENT10, 14,   0, 0, 0, 0, "TS1 5Hz",      "$(EVR):Triggers" }
  	{ $(EVR),	0,	EVENT11, 15,   0, 0, 0, 0, "TS1 1Hz",      "$(EVR):Triggers" }
