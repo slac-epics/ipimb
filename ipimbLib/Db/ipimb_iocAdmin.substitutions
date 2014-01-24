@@ -12,7 +12,7 @@ file access.db
 	{ DEV    , MANAGE      }
 	{ $(IOC) , IOCMANAGERS }
 }
-file ioc.db
+file iocSoft.db
 {
 	pattern
 	{ IOCNAME }

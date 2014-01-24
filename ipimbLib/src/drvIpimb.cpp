@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <dbAccess.h>
+#include <longSubRecord.h>
 #include "drvIpimb.h"
+#include "evrTime.h"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -17,79 +20,14 @@ static int IPIMB_device_list_inited = 0;
 static IPIMB_DEVICE_LIST  IPIMB_device_list = { {NULL, NULL}, 0};
 static epicsMutexId        IPIMB_device_list_lock = NULL;
 
-
-static void IPIMB_Receive_Task(IPIMB_DEVICE  * pdevice)
+int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange,
+                         uint16_t calibrationRange, uint32_t resetLength,
+                         uint16_t resetDelay, float chargeAmpRefVoltage, 
+                         float calibrationVoltage, float diodeBias,
+                         uint16_t calStrobeLength, uint32_t trigDelay,
+                         uint32_t trigPsDelay, uint32_t adcDelay,
+                         DBLINK *trig)
 {
-    int jj = 0;
-    while(TRUE)
-    {
-        if(pdevice->requestConf) // if request re-configuration
-        {
-            epicsMutexLock(pdevice->mutex_lock);
-            printf("Start to do configuration for [%s]\n", pdevice->name);
-            /* Sigh.  These are not initialized by the configuration!!! */
-            pdevice->ipmBoard.setBaselineSubtraction(0, 1);
-            pdevice->ipmBoard.configure(pdevice->ipmConfig);
-
-            struct timespec req = {3, 0}; // 3000 ms
-            nanosleep(&req, NULL);
-
-            pdevice->confState = 1;
-            pdevice->requestConf = 0;
-            printf("Finish doing configuration for [%s]\n", pdevice->name);
-
-            epicsMutexUnlock(pdevice->mutex_lock);
-        }
-        else if(pdevice->confState) // if configured
-        {
-            if(IPIMB_DRV_DEBUG) printf("waiting data ...\n");
-            //epicsMutexLock(pdevice->mutex_lock);  //no lock due to the risk of dead loop
-        
-            pdevice->ipmData = pdevice->ipmBoard.WaitData();
-            //TODO: get timestamp and pulseID
-            //TODO: BLD
-            //TODO: Calculate Fex
-            if(IPIMB_DRV_DEBUG && jj++ == 120)
-            {
-               jj = 0;
-               pdevice->ipmData.dumpRaw();
-            }
-
-            epicsTimeStamp evt_time;
-            epicsTimeGetEvent(&evt_time, 1);
-            //printf("nsec is 0x%08X\n", evt_time.nsec);
-            scanIoRequest(pdevice->ioscan);
-
-            //epicsMutexUnlock(pdevice->mutex_lock);
-        }
-        struct timespec req = {0, 3000000}; // 3 ms
-        nanosleep(&req, NULL);
-    }
-}
-
-/* Configure board immediately */
-int ipimbConfigure(IPIMB_DEVICE  * pdevice)
-{
-    bool rtn;
-    if(IPIMB_DRV_DEBUG)
-    {
-       pdevice->ipmConfig.dump();
-    }
-    epicsMutexLock(pdevice->mutex_lock);
-    rtn = pdevice->ipmBoard.configure(pdevice->ipmConfig);
-
-    struct timespec req = {0, 300000000}; // 300 ms
-    nanosleep(&req, NULL);
-    pdevice->confState = 1;
-    epicsMutexUnlock(pdevice->mutex_lock);
-    return rtn;
-}
-
-int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, uint16_t calibrationRange, uint32_t resetLength, uint16_t resetDelay,
-                           float chargeAmpRefVoltage, float calibrationVoltage, float diodeBias,
-                          uint16_t calStrobeLength, uint32_t trigDelay, uint32_t trigPsDelay, uint32_t adcDelay)
-{
-    bool rtn	= false;
     IPIMB_DEVICE  * pdevice = NULL;
 
     if(ipimbName == NULL || !(pdevice = ipimbFindDeviceByName (ipimbName)) )
@@ -97,32 +35,18 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange, uint16_t cal
         return -1;
     }
 
-    Pds::Ipimb::ConfigV2 ipmConf(chargeAmpRange, calibrationRange, resetLength, resetDelay, chargeAmpRefVoltage, calibrationVoltage, diodeBias,
-                          calStrobeLength, trigDelay, trigPsDelay, adcDelay);
+    pdevice->ipmBoard.SetTrigger(trig);
+
+    Ipimb::ConfigV2 ipmConf(chargeAmpRange, calibrationRange, resetLength, resetDelay, chargeAmpRefVoltage,
+                            calibrationVoltage, diodeBias, calStrobeLength, trigDelay, trigPsDelay, adcDelay);
 
     if(IPIMB_DRV_DEBUG)
     {
        printf("Dump current configuration\n");
        ipmConf.dump();
     }
-#if 0
-    epicsMutexLock(pdevice->mutex_lock);
-    pdevice->ipmConfig = ipmConf;
-    printf("start to do configuration\n");
-    rtn = pdevice->ipmBoard.configure(ipmConf);
-
-    struct timespec req = {0, 300000000}; // 300 ms
-    nanosleep(&req, NULL);
-    pdevice->confState = 1;
-    printf("finish doing configuration\n");
-    epicsMutexUnlock(pdevice->mutex_lock);
-#else
-    epicsMutexLock(pdevice->mutex_lock);
     pdevice->ipmConfig = ipmConf;	/* save requested config */
-    pdevice->requestConf = 1;	/* put request so we have no mutex issue between configure and reading */
-    epicsMutexUnlock(pdevice->mutex_lock);
-#endif
-    return rtn;
+    return pdevice->ipmBoard.configure(pdevice->ipmConfig);
 }
 
 /* This function is used to check if the ipimb box name already in our list */
@@ -190,9 +114,41 @@ static int ipimbSetPv(int iPvIndex, void* pPvValue, void* payload)
     return 0;
 }
 
-int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype)
+int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype,
+                  char *trigger, int polarity)
 {
     IPIMB_DEVICE  * pdevice = NULL;
+    DBADDR trigaddr;
+    static unsigned long ev140 = 140;
+
+    /*
+     * Sigh.  The joys of backwards compatibility.
+     *
+     * So, we want to have the ability to support negative-going signals (default),
+     * positive-going signals, or no baseline subtraction at all.  The obvious
+     * parameter values would be -1, 1, and 0, respectively.  But, we have st.cmd
+     * files that don't supply a polarity parameter, which ends up being interpreted
+     * as 0.  Therefore, 0 has to mean negative-going.
+     *
+     * So, we let 1 be positive-going, and 2 be no baseline subtraction, and remap
+     * the values here.
+     */
+    switch (polarity) {
+    case 0:
+        polarity = -1;
+        break;
+    case 1:
+        polarity = 1;
+        break;
+    case 2:
+        polarity = 0;
+        break;
+    default:
+        printf("Unknown polarity %d for %s, defaulting to negative polarity.\n",
+               polarity, name);
+        polarity = -1;
+        break;
+    }
 
     if(!IPIMB_device_list_inited)
     {
@@ -215,21 +171,26 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     }
 
     // TODO: mdestIP needs to check and convert and setup
-    pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP);
+    if (dbNameToAddr(trigger, &trigaddr)) {
+        printf("No PV trigger named %s, using constant event 140!\n", trigger);
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140, polarity);
+    } else {
+        unsigned long *trig = (unsigned long *) trigaddr.pfield;
+        printf("Found PV trigger for IPIMB%d %s at %p (gen at %p)\n", 
+               physID, trigger, trig, trig + MAX_EV_TRIGGERS);
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID,
+                                   trig, trig + MAX_EV_TRIGGERS, polarity);
+    }
 
     /* Add to the device linked list */
     epicsMutexLock(IPIMB_device_list_lock);
     ellAdd((ELLLIST *)&IPIMB_device_list, (ELLNODE *)pdevice);
     epicsMutexUnlock(IPIMB_device_list_lock);
 
-
-    /* Create thread */
-    epicsThreadMustCreate("ipimb_Rcvr", OPTHREAD_PRIORITY, OPTHREAD_STACK, (EPICSTHREADFUNC)IPIMB_Receive_Task, (void *)pdevice);
-
     BldRegister(physID, dtype, sizeof(IpimBoardData) + sizeof(Ipimb::ConfigV2) + sizeof(Lusi::IpmFexV1),
                 ipimbSetPv);
 
-    printf( "ipimb box [%s] at [%s] added.\n", name, ttyName );
+    printf( "ipimb box [%s] at [%s] added (polarity = %d).\n", name, ttyName, polarity);
     return(0);
 }
 
@@ -271,4 +232,3 @@ static long IPIMB_EPICS_Report(int level)
 #ifdef  __cplusplus
 }
 #endif  /*      __cplusplus     */
-

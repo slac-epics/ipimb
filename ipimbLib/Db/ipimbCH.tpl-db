@@ -16,7 +16,25 @@ record(ai, "$(RECNAME):CH$(CHANNEL)_RAW") {
   field(MDEL, "-1")
   field(EGU,  "Volt")
   field(LINR, "LINEAR")
-  $(RAWTSE)
+  field(TSE,  "-2")
+  field(FLNK, "$(RECNAME):CH$(CHANNEL)_PS")
+}
+
+record(ai, "$(RECNAME):CH$(CHANNEL)_PS") {
+  field(DESC, "Analog Input Presample")
+  field(SCAN, "Passive")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):$(CHANNEL):PS")
+  field(PREC, "4")
+  field(PRIO, "HIGH")
+  field(EGUF, "5")
+  field(EGUL, "0")
+  field(HOPR, "5")
+  field(LOPR, "0")
+  field(MDEL, "-1")
+  field(EGU,  "Volt")
+  field(LINR, "LINEAR")
+  field(TSEL, "$(RECNAME):CH$(CHANNEL)_RAW.TIME")
   field(FLNK, "$(RECNAME):CH$(CHANNEL)")
 }
 
@@ -31,9 +49,19 @@ record(calc,"$(RECNAME):CH$(CHANNEL)") {
   field(INPC,"$(RECNAME):CH$(CHANNEL)_SCALE.VAL NPP NMS")
   field(PREC,"4")
   field(EGU,  "Volt")
-  field(TSEL, "$(RECNAME):CH0_RAW.TIME")
+  field(TSEL, "$(RECNAME):CH$(CHANNEL)_RAW.TIME")
   field(MDEL, "-1")
-  $(CHNEXT)
+  field(FLNK, "$(RECNAME):CH$(CHANNEL)_DONE")
+}
+
+record(bo, "$(RECNAME):CH$(CHANNEL)_DONE")
+{
+  field(DESC, "Push a 1 to Done Counter")
+  field(DOL, "1")
+  field(OUT, "$(DONECTR) PP")
+  field(ZNAM, "READY")
+  field(ONAM, "DONE")
+  field(ZSV, "MINOR")
 }
 
 record(mbbo,"$(RECNAME):ChargeAmpRangeCH$(CHANNEL)")
@@ -69,6 +97,7 @@ record(mbbo,"$(RECNAME):ChargeAmpRangeCH$(CHANNEL)")
   field(FTVL, "14")
   field(FTST, "14nF, All Close")
   field(FLNK, "$(RECNAME):ChargeAmpRangeFanout$(CHANNEL)")
+  field(PINI, "YES")
 }
 
 record(fanout, "$(RECNAME):ChargeAmpRangeFanout$(CHANNEL)")

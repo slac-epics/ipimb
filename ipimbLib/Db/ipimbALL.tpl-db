@@ -2,7 +2,48 @@
 # These are the records that are not per channel.
 #
 
-record(calc,"$(RECNAME):SUM") {
+#
+# Note that this writes a 0 to the output when all four inputs become 1, but
+# nothing when the inputs are reset to 0.
+#
+record(calcout, "$(RECNAME):DONE_CNT")
+{
+	field(DESC, "Count IPIMB=Done")
+	field(PINI, "YES")
+	field(CALC, "A+B+C+D=4?1:0")
+	field(OUT, "$(RECNAME):DONE_CNT_RESET PP")
+	field(OOPT, "Transition To Non-zero")
+	field(DOPT, "Use OCAL")
+	field(OCAL, "0")
+	field(IVOA, "Don't drive outputs")
+}
+
+#
+# When this is processed, we write zeroes to the inputs of DONE_CNT, and cause
+# it to process (and therefore reset without generating any output).  Then,
+# we continue to process the other records.
+#
+record(dfanout, "$(RECNAME):DONE_CNT_RESET")
+{
+	field(DESC, "Reset the DONE counter")
+	field(OUTA, "$(RECNAME):DONE_CNT.A")
+	field(OUTB, "$(RECNAME):DONE_CNT.B")
+	field(OUTC, "$(RECNAME):DONE_CNT.C")
+	field(OUTD, "$(RECNAME):DONE_CNT.D PP")
+	field(FLNK, "$(RECNAME):CURRENTFID")
+}
+
+record(genSub, "$(RECNAME):CURRENTFID") {
+  field(DESC, "Current Fiducial")
+  field(SCAN, "Passive")
+  field(SNAM, "evrTimeGetFiducial")
+  field(INPA, "$(RECNAME):CH0_RAW.NAME")
+  field(FLNK, "$(RECNAME):SUM")
+  field(TSE,  "-2")
+}
+
+record(calc,"$(RECNAME):SUM")
+{
         field(DESC,"SUM")
         field(SCAN,"Passive")
         field(CALC,"(A+B+C+D)")
@@ -15,7 +56,8 @@ record(calc,"$(RECNAME):SUM") {
         field(FLNK, "$(RECNAME):XPOS")
 }
 
-record(calc,"$(RECNAME):XPOS") {
+record(calc,"$(RECNAME):XPOS")
+{
         field(DESC,"XPOS")
         field(SCAN,"Passive")
         field(CALC,"E*(B-D)/(B+D)")
@@ -29,7 +71,8 @@ record(calc,"$(RECNAME):XPOS") {
         field(FLNK, "$(RECNAME):YPOS")
 }
 
-record(calc,"$(RECNAME):YPOS") {
+record(calc,"$(RECNAME):YPOS")
+{
         field(DESC,"YPOS")
         field(SCAN,"Passive")
         field(CALC,"E*(A-C)/(A+C)")
@@ -77,6 +120,43 @@ record(ao,"$(RECNAME):DiodeBias")
    field(FLNK, "$(RECNAME):Configure")
 }
 
+record(ao,"$(RECNAME):RefVoltage")
+{
+   field(DESC, "Charge Amp Ref Voltage")
+   field(PREC, "4")
+   field(DRVH, "200")
+   field(DRVL, "0")
+   field(HOPR, "200")
+   field(LOPR, "0")
+   field(VAL,  "1")
+   field(EGU,  "Volt")
+   field(FLNK, "$(RECNAME):Configure")
+}
+
+record(longout,"$(RECNAME):AcqWindow")
+{
+   field(DESC, "Reset Length")
+   field(DRVH, "2000000")
+   field(DRVL, "0")
+   field(HOPR, "2000000")
+   field(LOPR, "0")
+   field(EGU,  "ns")
+   field(VAL,  "600000")
+   field(FLNK, "$(RECNAME):Configure")
+}
+
+record(longout,"$(RECNAME):ResetDelay")
+{
+   field(DESC, "Reset Delay")
+   field(DRVH, "500000")
+   field(DRVL, "0")
+   field(HOPR, "500000")
+   field(LOPR, "0")
+   field(EGU,  "ns")
+   field(VAL,  "4095")
+   field(FLNK, "$(RECNAME):Configure")
+}
+
 record(longout,"$(RECNAME):TrigDelay")
 {
    field(DESC, "Trig Delay")
@@ -89,6 +169,11 @@ record(longout,"$(RECNAME):TrigDelay")
    field(FLNK, "$(RECNAME):Configure")
 }
 
+#
+# This genSub does the IPIMB configuration.  It also remembers the current
+# trigger if we are not currently remembering a trigger, and turns the trigger
+# off.
+#
 record(genSub, "$(RECNAME):Configure") {
   field(DESC, "Configure IPIMB")
   field(SCAN, "Passive")
@@ -121,16 +206,16 @@ record(genSub, "$(RECNAME):Configure") {
   field(INPF, "0")
   field(FTF,  "USHORT")
   field(NOF,  "1")
-## RstLength (leave as default)
-  field(INPG, "600000")
+## RstLength, user set
+  field(INPG, "$(RECNAME):AcqWindow")
   field(FTG,  "ULONG")
   field(NOG,  "1")
-## RstDelay (leave as default)
-  field(INPH, "4095")
+## RstDelay, user set
+  field(INPH, "$(RECNAME):ResetDelay")
   field(FTH,  "USHORT")
   field(NOH,  "1")
-## ChargeAmpRefV (leave as default)
-  field(INPI, "1")
+## ChargeAmpRefV, user set
+  field(INPI, "$(RECNAME):RefVoltage")
   field(FTI,  "FLOAT")
   field(NOI,  "1")
 ## CaliV (no need so far)
@@ -165,9 +250,25 @@ record(genSub, "$(RECNAME):Configure") {
   field(INPQ, "4000")
   field(FTQ,  "ULONG")
   field(NOQ,  "1")
+## Trigger enable
+  field(INPR, "$(TRIGGER)")
+  field(FTR,  "ULONG")
+  field(NOR,  "1")
 
 # Box name
   field(INPU, "$(RECNAME):BoxName")
 
+  field(FLNK, "$(RECNAME):WaitConfig")
 }
 
+#
+# This record doesn't finish processing until all outstanding configurations
+# are complete.  It also restores the saved trigger.
+#
+record(bi, "$(RECNAME):WaitConfig") {
+  field(DESC, "Wait for Configuration")
+  field(SCAN, "Passive")
+  field(DTYP, "IPIMB")
+  field(INP,  "@$(BOX):0:DATA")
+  field(PRIO, "HIGH")
+}

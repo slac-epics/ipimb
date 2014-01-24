@@ -36,22 +36,25 @@ extern int IPIMB_DEV_DEBUG;
 /* define function flags */
 typedef enum {
         IPIMB_AI_DATA,
+        IPIMB_AI_PS,
 } IPIMBFUNC;
 
 static struct PARAM_MAP
 {
         char param[MAX_CA_STRING_SIZE];
         int  funcflag;
-} param_map[1] = {
-    {"DATA", IPIMB_AI_DATA}
+} param_map[2] = {
+    {"DATA", IPIMB_AI_DATA},
+    {"PS",   IPIMB_AI_PS}
 };
 #define N_PARAM_MAP (sizeof(param_map)/sizeof(struct PARAM_MAP))
 
 typedef struct IPIMB_DEVDATA
 {
-    IPIMB_DEVICE    * pdevice;
-    unsigned short      chnlnum;
-    int         funcflag;
+    IPIMB_DEVICE    *pdevice;
+    unsigned short   chnlnum;
+    int              funcflag;
+    CALLBACK         callback;
 } IPIMB_DEVDATA;
 
 /* This function will be called by all device support */
@@ -133,7 +136,7 @@ long init_ai( struct aiRecord * pai)
         pai->pact=TRUE;
         return (S_db_badField);
     }
-    pai->eslo = (pai->eguf - pai->egul)/(float)0x10000;
+    pai->eslo = (pai->eguf - pai->egul)/(float)0xffff;
     pai->roff = 0x0;
 
     if(IPIMB_DevData_Init((dbCommon *) pai, pai->inp.value.instio.string) != 0)
@@ -160,42 +163,63 @@ long ai_ioint_info(int cmd,aiRecord *pai,IOSCANPVT *iopvt)
 long read_ai(struct aiRecord *pai)
 {
     IPIMB_DEVDATA * pdevdata = (IPIMB_DEVDATA *)(pai->dpvt);
+    IpimBoardData *ipmData  = pdevdata->pdevice->ipmBoard.getData(&pai->time);
+    int status = -1;
 
-    int status=-1;
-
-    switch(pdevdata->funcflag)
-    {
+    switch(pdevdata->funcflag) {
     case IPIMB_AI_DATA:
-      {
-        switch(pdevdata->chnlnum)
-            {
+        if (ipmData) {
+            switch(pdevdata->chnlnum) {
             case 0:
-                pai->rval = pdevdata->pdevice->ipmData._ch0;
+                memcpy(&pdevdata->pdevice->ipmData, ipmData, sizeof(IpimBoardData)); // Remember this!
+                pai->rval = ipmData->ch0;
                 break;
             case 1:
-                pai->rval = pdevdata->pdevice->ipmData._ch1;
+                pai->rval = ipmData->ch1;
                 break;
             case 2:
-                pai->rval = pdevdata->pdevice->ipmData._ch2;
+                pai->rval = ipmData->ch2;
                 break;
             case 3:
             default:
-                pai->rval = pdevdata->pdevice->ipmData._ch3;
+                pai->rval = ipmData->ch3;
                 break;
             }
-        status = pdevdata->pdevice->ipmBoard.dataDamage();
-      }
-      break;
+        } else
+            pai->rval = 0;
+        status = ipmData ? 0 : -1;
+        break;
+    case IPIMB_AI_PS:
+        if (ipmData) {
+            switch(pdevdata->chnlnum) {
+            case 0:
+                pai->rval = ipmData->ch0_ps;
+                break;
+            case 1:
+                pai->rval = ipmData->ch1_ps;
+                break;
+            case 2:
+                pai->rval = ipmData->ch2_ps;
+                break;
+            case 3:
+            default:
+                pai->rval = ipmData->ch3_ps;
+                break;
+            }
+        } else
+            pai->rval = 0;
+        status = ipmData ? 0 : -1;
+        break;
+    default:
+        pai->rval = 0;
+        status = -1;
     }
 
-    if(status)
-    {
+    if(status) {
         if(IPIMB_DEV_DEBUG) printf("Data damaged for record [%s]\n", pai->name);
         recGblSetSevr(pai, READ_ALARM, INVALID_ALARM);
         return 0;
-    }
-    else
-    {
+    } else {
         pai->udf=FALSE;
         return 0;/******** convert ****/
     }
@@ -203,33 +227,85 @@ long read_ai(struct aiRecord *pai)
 
 long ai_lincvt(struct aiRecord   *pai, int after)
 {
+    if(!after) return(0);
+    /* set linear conversion slope*/
+    pai->eslo = (pai->eguf - pai->egul)/(float)0x10000;
+    pai->roff = 0x0;
+    return(0);
+}
 
-        if(!after) return(0);
-        /* set linear conversion slope*/
-        pai->eslo = (pai->eguf - pai->egul)/(float)0x10000;
-        pai->roff = 0x0;
-        return(0);
+static void ipimbConfigCallback(CALLBACK *pcallback)
+{
+    void *puser;
+    struct biRecord *pbi;
+    struct rset *prset;
+    IPIMB_DEVDATA * pdevdata;
+
+    callbackGetUser(puser,pcallback);
+    pbi = (struct biRecord *)puser;
+    pdevdata = (IPIMB_DEVDATA *)(pbi->dpvt);
+    pdevdata->pdevice->ipmBoard.lock();
+    if (pdevdata->pdevice->ipmBoard.isConfiguring()) {
+        callbackRequestDelayed(&pdevdata->callback,1); /* Wait again! */
+        pdevdata->pdevice->ipmBoard.unlock();
+    } else {
+        /* We're done, finish the record processing. */
+        pdevdata->pdevice->ipmBoard.RestoreTrigger();
+        pdevdata->pdevice->ipmBoard.unlock();
+        prset=(struct rset *)(pbi->rset);
+        dbScanLock((struct dbCommon *)pbi);
+        (*(int (*)(struct dbCommon *))prset->process)((struct dbCommon *)pbi);
+        dbScanUnlock((struct dbCommon *)pbi);
+    }
+}
+
+long init_bi( struct biRecord * pbi)
+{
+    CALLBACK *pcallback;
+    pbi->dpvt = NULL;
+
+    if (pbi->inp.type!=INST_IO)
+    {
+        recGblRecordError(S_db_badField, (void *)pbi, "devBiIPIMB Init_record, Illegal INP");
+        pbi->pact=TRUE;
+        return (S_db_badField);
+    }
+
+    if(IPIMB_DevData_Init((dbCommon *) pbi, pbi->inp.value.instio.string) != 0)
+    {
+        errlogPrintf("Fail to init devdata for record %s!\n", pbi->name);
+        recGblRecordError(S_db_badField, (void *) pbi, "Init devdata Error");
+        pbi->pact = TRUE;
+        return (S_db_badField);
+    }
+
+    pcallback = &((IPIMB_DEVDATA *)pbi->dpvt)->callback;
+    callbackSetCallback(ipimbConfigCallback, pcallback);
+    callbackSetUser(pbi, pcallback);
+
+    return 0;
+}
+
+long read_bi(struct aiRecord *pbi)
+{
+    IPIMB_DEVDATA * pdevdata = (IPIMB_DEVDATA *)(pbi->dpvt);
+
+    pdevdata->pdevice->ipmBoard.lock();
+    if (pdevdata->pdevice->ipmBoard.isConfiguring()) {
+        pbi->pact = TRUE;
+        callbackRequestDelayed(&pdevdata->callback,1); /* Wait a second for configuration */
+    } else {
+        pbi->pact = FALSE;
+        pbi->rval = pdevdata->pdevice->ipmBoard.isConfigOK();
+        printf("\n!!! ipimbConfigProc [%s] was finished for ipimb box [%s], config_ok=%d !!!\n",
+               pbi->name, pdevdata->pdevice->name, pbi->rval);
+    }
+    pdevdata->pdevice->ipmBoard.unlock();
+
+    pbi->udf=FALSE;
+    return 2; /* No convert */
 }
 
 #ifdef  __cplusplus
 }
 #endif  /*      __cplusplus     */
-
-#if 0
-struct IPIMB_DEV_SUP_SET
-{
-    long            number;
-    DEVSUPFUN       report;
-    DEVSUPFUN       init;
-    DEVSUPFUN       init_record;
-    DEVSUPFUN       get_ioint_info;
-    DEVSUPFUN       read_ai;
-    DEVSUPFUN       special_linconv;
-} devAiIPIMB = {6, NULL, NULL, init_ai, ai_ioint_info, read_ai, ai_lincvt};
-
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
-epicsExportAddress(dset, devAiIPIMB);
-#endif
-
-#endif
-                   

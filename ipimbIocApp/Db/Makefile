@@ -10,17 +10,24 @@ include $(TOP)/configure/CONFIG
 #----------------------------------------------------
 # Create and install (or just install)
 # databases, templates, substitutions like this
-DB += iocAdmin.db
-DB += evr-ipimb.db
 
 #----------------------------------------------------
 # Create and install (or just install)
 # Archive files, templates, substitutions like this
 #
 ARCHIVE += archive_ipimbIoc.archive
+ARCHIVE += archive_ipimb.archive
+REQ += autosave_ipimb.req
 
 # Nothing to build for autosave, just install from $AUTOSAVE/db
 DB_INSTALLS += $(AUTOSAVE)/db/save_restoreStatus.db
+
+# Grab a few things from the IPIMB module.
+DB_INSTALLS += $(IPIMB)/db/bldFanout.db
+DB_INSTALLS += $(IPIMB)/db/bldSettings.db
+DB_INSTALLS += $(IPIMB)/db/ipimb.db
+DB_INSTALLS += $(IPIMB)/db/ipimb_iocAdmin.db
+DB_INSTALLS += $(IPIMB)/db/evr-ipimb.db
 
 include $(TOP)/configure/RULES
 #----------------------------------------

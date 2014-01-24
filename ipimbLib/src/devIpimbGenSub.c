@@ -44,9 +44,13 @@ extern "C" {
 #endif  /*      __cplusplus     */
 
 extern int IPIMB_DRV_DEBUG;
-extern int ipimbConfigureByName (char * ipimbName, uint16_t chargeAmpRange, uint16_t calibrationRange, uint32_t resetLength, uint16_t resetDelay,
-                           float chargeAmpRefVoltage, float calibrationVoltage, float diodeBias,
-                          uint16_t calStrobeLength, uint32_t trigDelay, uint32_t trigPsDelay, uint32_t adcDelay);
+extern int ipimbConfigureByName (char * ipimbName, uint16_t chargeAmpRange,
+                                 uint16_t calibrationRange, uint32_t resetLength,
+                                 uint16_t resetDelay, float chargeAmpRefVoltage,
+                                 float calibrationVoltage, float diodeBias,
+                                 uint16_t calStrobeLength, uint32_t trigDelay,
+                                 uint32_t trigPsDelay, uint32_t adcDelay,
+                                 DBLINK *trig);
 
 long ipimbConfigInit(struct genSubRecord *psub)
 {
@@ -66,26 +70,28 @@ long ipimbConfigProc(struct genSubRecord *psub)
     /* We don't care link here, so we only care value, type and size */
 
 #if 0
+    /* Not really used, so let's avoid the warning */
     uint32_t triggerCountLow    = * ( (uint32_t *) (psub->a));
     uint32_t triggerCountHigh   = * ( (uint32_t *) (psub->b));
-    uint32_t serialIDLow       =  * ( (uint32_t *) (psub->c));
+    uint32_t serialIDLow        =  * ( (uint32_t *) (psub->c));
     uint32_t serialIDHigh       = * ( (uint32_t *) (psub->d));
 #endif
-    uint16_t chargeAmpRange   = * ( (uint16_t *) (psub->e));
-    uint16_t calibrationRange = * ( (uint16_t *) (psub->f));
-    uint32_t resetLength       = *( (uint32_t *) (psub->g) );
-    uint16_t resetDelay     = * ((uint16_t *) (psub->h));
-    float chargeAmpRefVoltage    = *( (float *) (psub->i) );
+    uint16_t chargeAmpRange     = * ( (uint16_t *) (psub->e));
+    uint16_t calibrationRange   = * ( (uint16_t *) (psub->f));
+    uint32_t resetLength        = *( (uint32_t *) (psub->g) );
+    uint16_t resetDelay         = * ((uint16_t *) (psub->h));
+    float chargeAmpRefVoltage   = *( (float *) (psub->i) );
     float calibrationVoltage    = *( (float *) (psub->j) );
-    float diodeBias    = *( (float *) (psub->k) );
+    float diodeBias             = *( (float *) (psub->k) );
 #if 0
-    uint16_t status     = * ((uint16_t *) (psub->l));
-    uint16_t errors     = * ((uint16_t *) (psub->m));
+    /* Not really used, so let's avoid the warning */
+    uint16_t status             = * ((uint16_t *) (psub->l));
+    uint16_t errors             = * ((uint16_t *) (psub->m));
 #endif
-    uint16_t calStrobeLength     = * ((uint16_t *) (psub->n));
-    uint32_t trigDelay       = * ((uint32_t *) (psub->o));
-    uint32_t trigPsDelay       = * ((uint32_t *) (psub->p));
-    uint32_t adcDelay       = *((uint32_t *) (psub->q));
+    uint16_t calStrobeLength    = * ((uint16_t *) (psub->n));
+    uint32_t trigDelay          = * ((uint32_t *) (psub->o));
+    uint32_t trigPsDelay        = * ((uint32_t *) (psub->p));
+    uint32_t adcDelay           = *((uint32_t *) (psub->q));
 
     char * ipimbName  = (char *) (psub->u);
 
@@ -106,11 +112,11 @@ long ipimbConfigProc(struct genSubRecord *psub)
     }
     /* no need to do value check */
 
-    rtn = ipimbConfigureByName(ipimbName, chargeAmpRange, calibrationRange, resetLength, resetDelay, chargeAmpRefVoltage, calibrationVoltage, diodeBias,
-                          calStrobeLength, trigDelay, trigPsDelay, adcDelay);
+    rtn = ipimbConfigureByName(ipimbName, chargeAmpRange, calibrationRange, resetLength,
+                               resetDelay, chargeAmpRefVoltage, calibrationVoltage,
+                               diodeBias, calStrobeLength, trigDelay, trigPsDelay,
+                               adcDelay, &psub->inpr);
 
-
-    printf("\n!!! ipimbConfigProc [%s] was finished for ipimb box [%s] !!!\n", psub->name, ipimbName);
     return rtn;
 }
 
