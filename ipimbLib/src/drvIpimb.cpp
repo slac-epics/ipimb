@@ -119,7 +119,7 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
 {
     IPIMB_DEVICE  * pdevice = NULL;
     DBADDR trigaddr;
-    static unsigned long ev140 = 140;
+    static epicsUInt32 ev140 = 140;
 
     /*
      * Sigh.  The joys of backwards compatibility.
@@ -175,7 +175,7 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
         printf("No PV trigger named %s, using constant event 140!\n", trigger);
         pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140, polarity);
     } else {
-        unsigned long *trig = (unsigned long *) trigaddr.pfield;
+        epicsUInt32 *trig = (epicsUInt32 *) trigaddr.pfield;
         printf("Found PV trigger for IPIMB%d %s at %p (gen at %p)\n", 
                physID, trigger, trig, trig + MAX_EV_TRIGGERS);
         pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID,

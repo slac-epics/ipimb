@@ -172,8 +172,8 @@ static void *ipimb_configure_body(void *p)
     return NULL;
 }
 
-IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, unsigned long* trigger,
-                     unsigned long *gen, int polarity)
+IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUInt32* trigger,
+                     epicsUInt32 *gen, int polarity)
 {
     size_t stacksize;
     struct termios newtio;
@@ -272,7 +272,7 @@ void IpimBoard::do_read()
     epicsTimeStamp evt_time;
     int status = 0;
     int trigevent = *_trigger;
-    unsigned int gen = *_gen;
+    epicsUInt32 gen = *_gen;
     int eventvalid = trigevent > 0 && trigevent < 256;
     int do_print = 0;
     int did_skip = 0;
@@ -547,7 +547,7 @@ void IpimBoard::do_read()
             cbuf = cbuf ? 0 : 1;
             pthread_cond_signal(&cmdready); /* Wake up whoever did the read! */
             if (DBG_ENABLED(DEBUG_READER|DEBUG_DATA)) {
-                fprintf(stderr, "IPIMB%d: Got command response packet (gen=%d, _gen=%ld, trigevent=%d, _trigger=%ld, eventvalid=%d).\n",
+                fprintf(stderr, "IPIMB%d: Got command response packet (gen=%d, _gen=%d, trigevent=%d, _trigger=%d, eventvalid=%d).\n",
                         _physID, gen, *_gen, trigevent, *_trigger, eventvalid);
             }
             pthread_mutex_unlock(&mutex);

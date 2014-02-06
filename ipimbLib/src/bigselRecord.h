@@ -1,9 +1,3 @@
-#include "ellLib.h"
-#include "epicsMutex.h"
-#include "link.h"
-#include "epicsTime.h"
-#include "epicsTypes.h"
-
 #ifndef INCselSELMH
 #define INCselSELMH
 typedef enum {
@@ -13,123 +7,129 @@ typedef enum {
 	selSELM_Median_Signal
 }selSELM;
 #endif /*INCselSELMH*/
+
 #ifndef INCbigselH
 #define INCbigselH
+#include "epicsTypes.h"
+#include "link.h"
+#include "epicsMutex.h"
+#include "ellLib.h"
+#include "epicsTime.h"
 typedef struct bigselRecord {
-	char		name[61]; /*Record Name*/
-	char		desc[29]; /*Descriptor*/
-	char		asg[29]; /*Access Security Group*/
-	epicsEnum16	scan;	/*Scan Mechanism*/
-	epicsEnum16	pini;	/*Process at iocInit*/
-	short		phas;	/*Scan Phase*/
-	short		evnt;	/*Event Number*/
-	short		tse;	/*Time Stamp Event*/
-	DBLINK		tsel;	/*Time Stamp Link*/
-	epicsEnum16	dtyp;	/*Device Type*/
-	short		disv;	/*Disable Value*/
-	short		disa;	/*Disable*/
-	DBLINK		sdis;	/*Scanning Disable*/
-	epicsMutexId	mlok;	/*Monitor lock*/
-	ELLLIST		mlis;	/*Monitor List*/
-	unsigned char	disp;	/*Disable putField*/
-	unsigned char	proc;	/*Force Processing*/
-	epicsEnum16	stat;	/*Alarm Status*/
-	epicsEnum16	sevr;	/*Alarm Severity*/
-	epicsEnum16	nsta;	/*New Alarm Status*/
-	epicsEnum16	nsev;	/*New Alarm Severity*/
-	epicsEnum16	acks;	/*Alarm Ack Severity*/
-	epicsEnum16	ackt;	/*Alarm Ack Transient*/
-	epicsEnum16	diss;	/*Disable Alarm Sevrty*/
-	unsigned char	lcnt;	/*Lock Count*/
-	unsigned char	pact;	/*Record active*/
-	unsigned char	putf;	/*dbPutField process*/
-	unsigned char	rpro;	/*Reprocess */
-	void		*asp;	/*Access Security Pvt*/
-	struct putNotify *ppn;	/*addr of PUTNOTIFY*/
-	struct putNotifyRecord *ppnr;	/*pputNotifyRecord*/
-	struct scan_element *spvt;	/*Scan Private*/
-	struct rset	*rset;	/*Address of RSET*/
-	struct dset	*dset;	/*DSET address*/
-	void		*dpvt;	/*Device Private*/
-	struct dbRecordType *rdes;	/*Address of dbRecordType*/
-	struct lockRecord *lset;	/*Lock Set*/
-	epicsEnum16	prio;	/*Scheduling Priority*/
-	unsigned char	tpro;	/*Trace Processing*/
-	char bkpt;	/*Break Point*/
-	unsigned char	udf;	/*Undefined*/
-	epicsTimeStamp	time;	/*Time*/
-	DBLINK		flnk;	/*Forward Process Link*/
-	double		val;	/*Result*/
-	epicsEnum16	selm;	/*Select Mechanism*/
-	unsigned short	seln;	/*Index value*/
-	short		prec;	/*Display Precision*/
-	DBLINK		nvl;	/*Index Value Location*/
-	DBLINK		inpa;	/*Input A*/
-	DBLINK		inpb;	/*Input B*/
-	DBLINK		inpc;	/*Input C*/
-	DBLINK		inpd;	/*Input D*/
-	DBLINK		inpe;	/*Input E*/
-	DBLINK		inpf;	/*Input F*/
-	DBLINK		inpg;	/*Input G*/
-	DBLINK		inph;	/*Input H*/
-	DBLINK		inpi;	/*Input I*/
-	DBLINK		inpj;	/*Input J*/
-	DBLINK		inpk;	/*Input K*/
-	DBLINK		inpl;	/*Input L*/
-	DBLINK		inpm;	/*Input M*/
-	DBLINK		inpn;	/*Input N*/
-	DBLINK		inpo;	/*Input O*/
-	DBLINK		inpp;	/*Input P*/
-	char		egu[16]; /*Units Name*/
-	double		hopr;	/*High Operating Rng*/
-	double		lopr;	/*Low Operating Range*/
-	double		hihi;	/*Hihi Alarm Limit*/
-	double		lolo;	/*Lolo Alarm Limit*/
-	double		high;	/*High Alarm Limit*/
-	double		low;	/*Low Alarm Limit*/
-	epicsEnum16	hhsv;	/*Hihi Severity*/
-	epicsEnum16	llsv;	/*Lolo Severity*/
-	epicsEnum16	hsv;	/*High Severity*/
-	epicsEnum16	lsv;	/*Low Severity*/
-	double		hyst;	/*Alarm Deadband*/
-	double		adel;	/*Archive Deadband*/
-	double		mdel;	/*Monitor Deadband*/
-	double		a;	/*Value of Input A*/
-	double		b;	/*Value of Input B*/
-	double		c;	/*Value of Input C*/
-	double		d;	/*Value of Input D*/
-	double		e;	/*Value of Input E*/
-	double		f;	/*Value of Input F*/
-	double		g;	/*Value of Input G*/
-	double		h;	/*Value of Input H*/
-	double		i;	/*Value of Input I*/
-	double		j;	/*Value of Input J*/
-	double		k;	/*Value of Input K*/
-	double		l;	/*Value of Input L*/
-	double		m;	/*Value of Input M*/
-	double		n;	/*Value of Input N*/
-	double		o;	/*Value of Input O*/
-	double		p;	/*Value of Input P*/
-	double		la;	/*Prev Value of A*/
-	double		lb;	/*Prev Value of B*/
-	double		lc;	/*Prev Value of C*/
-	double		ld;	/*Prev Value of D*/
-	double		le;	/*Prev Value of E*/
-	double		lf;	/*Prev Value of F*/
-	double		lg;	/*Prev Value of G*/
-	double		lh;	/*Prev Value of H*/
-	double		li;	/*Prev Value of I*/
-	double		lj;	/*Prev Value of J*/
-	double		lk;	/*Prev Value of K*/
-	double		ll;	/*Prev Value of L*/
-	double		lm;	/*Prev Value of M*/
-	double		ln;	/*Prev Value of N*/
-	double		lo;	/*Prev Value of O*/
-	double		lp;	/*Prev Value of P*/
-	double		lalm;	/*Last Value Alarmed*/
-	double		alst;	/*Last Value Archived*/
-	double		mlst;	/*Last Val Monitored*/
-	unsigned short	nlst;	/*Last Index Monitored*/
+	char		name[61];	/* Record Name */
+	char		desc[41];	/* Descriptor */
+	char		asg[29];	/* Access Security Group */
+	epicsEnum16	scan;	/* Scan Mechanism */
+	epicsEnum16	pini;	/* Process at iocInit */
+	epicsInt16	phas;	/* Scan Phase */
+	epicsInt16	evnt;	/* Event Number */
+	epicsInt16	tse;	/* Time Stamp Event */
+	DBLINK		tsel;	/* Time Stamp Link */
+	epicsEnum16	dtyp;	/* Device Type */
+	epicsInt16	disv;	/* Disable Value */
+	epicsInt16	disa;	/* Disable */
+	DBLINK		sdis;	/* Scanning Disable */
+	epicsMutexId	mlok;	/* Monitor lock */
+	ELLLIST		mlis;	/* Monitor List */
+	epicsUInt8	disp;	/* Disable putField */
+	epicsUInt8	proc;	/* Force Processing */
+	epicsEnum16	stat;	/* Alarm Status */
+	epicsEnum16	sevr;	/* Alarm Severity */
+	epicsEnum16	nsta;	/* New Alarm Status */
+	epicsEnum16	nsev;	/* New Alarm Severity */
+	epicsEnum16	acks;	/* Alarm Ack Severity */
+	epicsEnum16	ackt;	/* Alarm Ack Transient */
+	epicsEnum16	diss;	/* Disable Alarm Sevrty */
+	epicsUInt8	lcnt;	/* Lock Count */
+	epicsUInt8	pact;	/* Record active */
+	epicsUInt8	putf;	/* dbPutField process */
+	epicsUInt8	rpro;	/* Reprocess  */
+	struct asgMember *asp;	/* Access Security Pvt */
+	struct putNotify *ppn;	/* addr of PUTNOTIFY */
+	struct putNotifyRecord *ppnr;	/* pputNotifyRecord */
+	struct scan_element *spvt;	/* Scan Private */
+	struct rset	*rset;	/* Address of RSET */
+	struct dset	*dset;	/* DSET address */
+	void		*dpvt;	/* Device Private */
+	struct dbRecordType *rdes;	/* Address of dbRecordType */
+	struct lockRecord *lset;	/* Lock Set */
+	epicsEnum16	prio;	/* Scheduling Priority */
+	epicsUInt8	tpro;	/* Trace Processing */
+	char bkpt;	/* Break Point */
+	epicsUInt8	udf;	/* Undefined */
+	epicsTimeStamp	time;	/* Time */
+	DBLINK		flnk;	/* Forward Process Link */
+	epicsFloat64	val;	/* Result */
+	epicsEnum16	selm;	/* Select Mechanism */
+	epicsUInt16	seln;	/* Index value */
+	epicsInt16	prec;	/* Display Precision */
+	DBLINK		nvl;	/* Index Value Location */
+	DBLINK		inpa;	/* Input A */
+	DBLINK		inpb;	/* Input B */
+	DBLINK		inpc;	/* Input C */
+	DBLINK		inpd;	/* Input D */
+	DBLINK		inpe;	/* Input E */
+	DBLINK		inpf;	/* Input F */
+	DBLINK		inpg;	/* Input G */
+	DBLINK		inph;	/* Input H */
+	DBLINK		inpi;	/* Input I */
+	DBLINK		inpj;	/* Input J */
+	DBLINK		inpk;	/* Input K */
+	DBLINK		inpl;	/* Input L */
+	DBLINK		inpm;	/* Input M */
+	DBLINK		inpn;	/* Input N */
+	DBLINK		inpo;	/* Input O */
+	DBLINK		inpp;	/* Input P */
+	char		egu[16];	/* Units Name */
+	epicsFloat64	hopr;	/* High Operating Rng */
+	epicsFloat64	lopr;	/* Low Operating Range */
+	epicsFloat64	hihi;	/* Hihi Alarm Limit */
+	epicsFloat64	lolo;	/* Lolo Alarm Limit */
+	epicsFloat64	high;	/* High Alarm Limit */
+	epicsFloat64	low;	/* Low Alarm Limit */
+	epicsEnum16	hhsv;	/* Hihi Severity */
+	epicsEnum16	llsv;	/* Lolo Severity */
+	epicsEnum16	hsv;	/* High Severity */
+	epicsEnum16	lsv;	/* Low Severity */
+	epicsFloat64	hyst;	/* Alarm Deadband */
+	epicsFloat64	adel;	/* Archive Deadband */
+	epicsFloat64	mdel;	/* Monitor Deadband */
+	epicsFloat64	a;	/* Value of Input A */
+	epicsFloat64	b;	/* Value of Input B */
+	epicsFloat64	c;	/* Value of Input C */
+	epicsFloat64	d;	/* Value of Input D */
+	epicsFloat64	e;	/* Value of Input E */
+	epicsFloat64	f;	/* Value of Input F */
+	epicsFloat64	g;	/* Value of Input G */
+	epicsFloat64	h;	/* Value of Input H */
+	epicsFloat64	i;	/* Value of Input I */
+	epicsFloat64	j;	/* Value of Input J */
+	epicsFloat64	k;	/* Value of Input K */
+	epicsFloat64	l;	/* Value of Input L */
+	epicsFloat64	m;	/* Value of Input M */
+	epicsFloat64	n;	/* Value of Input N */
+	epicsFloat64	o;	/* Value of Input O */
+	epicsFloat64	p;	/* Value of Input P */
+	epicsFloat64	la;	/* Prev Value of A */
+	epicsFloat64	lb;	/* Prev Value of B */
+	epicsFloat64	lc;	/* Prev Value of C */
+	epicsFloat64	ld;	/* Prev Value of D */
+	epicsFloat64	le;	/* Prev Value of E */
+	epicsFloat64	lf;	/* Prev Value of F */
+	epicsFloat64	lg;	/* Prev Value of G */
+	epicsFloat64	lh;	/* Prev Value of H */
+	epicsFloat64	li;	/* Prev Value of I */
+	epicsFloat64	lj;	/* Prev Value of J */
+	epicsFloat64	lk;	/* Prev Value of K */
+	epicsFloat64	ll;	/* Prev Value of L */
+	epicsFloat64	lm;	/* Prev Value of M */
+	epicsFloat64	ln;	/* Prev Value of N */
+	epicsFloat64	lo;	/* Prev Value of O */
+	epicsFloat64	lp;	/* Prev Value of P */
+	epicsFloat64	lalm;	/* Last Value Alarmed */
+	epicsFloat64	alst;	/* Last Value Archived */
+	epicsFloat64	mlst;	/* Last Val Monitored */
+	epicsUInt16	nlst;	/* Last Index Monitored */
 } bigselRecord;
 #define bigselRecordNAME	0
 #define bigselRecordDESC	1
@@ -139,7 +139,7 @@ typedef struct bigselRecord {
 #define bigselRecordPHAS	5
 #define bigselRecordEVNT	6
 #define bigselRecordTSE	7
-#define bigselRecordTBIGSEL	8
+#define bigselRecordTSEL	8
 #define bigselRecordDTYP	9
 #define bigselRecordDISV	10
 #define bigselRecordDISA	11
@@ -175,8 +175,8 @@ typedef struct bigselRecord {
 #define bigselRecordTIME	41
 #define bigselRecordFLNK	42
 #define bigselRecordVAL	43
-#define bigselRecordBIGSELM	44
-#define bigselRecordBIGSELN	45
+#define bigselRecordSELM	44
+#define bigselRecordSELN	45
 #define bigselRecordPREC	46
 #define bigselRecordNVL	47
 #define bigselRecordINPA	48
