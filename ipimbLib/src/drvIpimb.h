@@ -66,14 +66,6 @@
 #define IPIMB_DRV_VERSION "IPIMB Driver Version 1.0"
 
 /******************************************************************************************/
-/* We have an thread running to receive all IPIMB packets.                               */
-/* It then validates the packet and either puts into or appends to the link list          */
-/******************************************************************************************/
-#define OPTHREAD_PRIORITY       (90)            /* opthread Priority */
-#define OPTHREAD_STACK          (0x20000)       /* opthread Stack Size */
-/******************************************************************************************/
-
-/******************************************************************************************/
 #define MAX_CA_STRING_SIZE      (40)
 
 typedef ELLLIST IPIMB_DEVICE_LIST;
@@ -100,8 +92,8 @@ public:
 
 public:
     IPIMB_DEVICE(char * ipmName, char *ipmTtyName, char * ipmMdestIP, int physID, 
-                 epicsUInt32 *trigger, epicsUInt32 *gen, int polarity)
-        : ipmBoard(ipmTtyName, &ioscan, physID, trigger, gen, polarity), ipmData()
+                 epicsUInt32 *trigger, epicsUInt32 *gen, int polarity, char *delay, char *sync)
+        : ipmBoard(ipmTtyName, &ioscan, physID, trigger, gen, polarity, delay, ipmName, sync), ipmData()
     {
         name = epicsStrDup(ipmName);
         ttyName = epicsStrDup(ipmTtyName);
@@ -138,9 +130,10 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange,
                          DBLINK *trig);
 IPIMB_DEVICE * ipimbFindDeviceByName(char * name);
 IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName);
-    int		ipimbAdd(char * name, char * ttyName, char * mdestIP, unsigned int physID,
-                         unsigned int dtype, char *trigger, int polarity );
+int		ipimbAdd(char * name, char * ttyName, char * mdestIP, unsigned int physID,
+                         unsigned int dtype, char *trigger, int polarity, char *delay, char *sync );
 
+void ipimbStart(void);
 #ifdef	__cplusplus
 }
 #endif	/*	__cplusplus	*/

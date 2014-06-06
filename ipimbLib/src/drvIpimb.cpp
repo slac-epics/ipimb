@@ -115,7 +115,7 @@ static int ipimbSetPv(int iPvIndex, void* pPvValue, void* payload)
 }
 
 int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype,
-                  char *trigger, int polarity)
+                  char *trigger, int polarity, char *delay, char *sync)
 {
     IPIMB_DEVICE  * pdevice = NULL;
     DBADDR trigaddr;
@@ -173,13 +173,13 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
     // TODO: mdestIP needs to check and convert and setup
     if (dbNameToAddr(trigger, &trigaddr)) {
         printf("No PV trigger named %s, using constant event 140!\n", trigger);
-        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140, polarity);
+        pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID, &ev140, &ev140, polarity, delay, sync);
     } else {
         epicsUInt32 *trig = (epicsUInt32 *) trigaddr.pfield;
         printf("Found PV trigger for IPIMB%d %s at %p (gen at %p)\n", 
                physID, trigger, trig, trig + MAX_EV_TRIGGERS);
         pdevice = new IPIMB_DEVICE(name, ttyName, mdestIP, physID,
-                                   trig, trig + MAX_EV_TRIGGERS, polarity);
+                                   trig, trig + MAX_EV_TRIGGERS, polarity, delay, sync);
     }
 
     /* Add to the device linked list */
@@ -192,6 +192,11 @@ int	 ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, uns
 
     printf( "ipimb box [%s] at [%s] added (polarity = %d).\n", name, ttyName, polarity);
     return(0);
+}
+
+void ipimbStart(void)
+{
+    IpimBoard::ipimbStart();
 }
 
 /**************************************************************************************************/

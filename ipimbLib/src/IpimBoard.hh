@@ -11,11 +11,12 @@
 #include <sys/types.h>
 #include <time.h>
 #include <dbScan.h>
+#include <epicsThread.h>
 #include <epicsTime.h>
 #include <dbAccess.h>
-#include <pthread.h>
 
 #include "ConfigV2.hh"
+#include "timesync.h"
 
 #define BAUDRATE B115200
 /*
@@ -189,6 +190,7 @@ namespace Pds {
     };
 
     class IpimBoard {
+        friend class ipimbSyncObject;
     public:
         enum {
             timestamp0          = 0x00,
@@ -213,20 +215,17 @@ namespace Pds {
         };
 
         IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUInt32 *trigger,
-                  epicsUInt32 *gen, int polarity);
+                  epicsUInt32 *gen, int polarity, char *delay, char *name, char *sync);
         ~IpimBoard();
 
-        int get_fd();
-        void flush();
-        int  qlen();
-
-        void do_read(void);       // The main thread body!
         void do_configure(void);  // The configure thread body!
 
         int WriteCommand(unsigned short*);
+        void SendCommandResponse(void);
         unsigned ReadRegister(unsigned regAddr);
         void WriteRegister(unsigned regAddr, unsigned regValue);
 
+        void sendData(epicsTimeStamp &t);
         IpimBoardData *getData(epicsTimeStamp *t);
 
         bool configure(Ipimb::ConfigV2& config);
@@ -255,40 +254,84 @@ namespace Pds {
         bool isConfigOK(void)    { return config_ok; }
         void lock(void)          { pthread_mutex_lock(&mutex); }
         void unlock(void)        { pthread_mutex_unlock(&mutex); }
+        static void ipimbStart(void) { if (!started) { epicsMutexUnlock(start_mutex); started = true; }; }
 
         void SetTrigger(DBLINK *trig);
         void RestoreTrigger(void);
+
+        unsigned short *GetBuffer(int cmd) { return cmd ? _cmd[cbuf] : _data[dbuf]; }
     
     private:
-        int   _physID;               // Physical ID
-        int   _fd;                   // File descriptor
         char* _serialDevice;         // Name of serial port
-        epicsUInt32*  _trigger;      // PV with event number of trigger
-        epicsUInt32*  _gen;          // PV with generation number of trigger
         int   _polarity;             // -1 = negative-going, 1 = positive-going,
                                      //  0 = no baseline subtraction.
         IOSCANPVT *_ioscan;
         bool  config_ok;
+        static bool  started;
         
-        unsigned short _cmd[2][CRPackets];
-        unsigned short _data[2][DataPackets];
-        int cbuf, dbuf;
-        int cidx, didx;
         epicsTimeStamp ts[2];
         int have_data;
 
-        pthread_mutex_t mutex;
+        static epicsMutexId trigger_mutex;
+        static epicsMutexId start_mutex;
+        pthread_mutex_t mutex;       // MCB - Sigh. EPICS seems to willfully misunderstand
+                                     // the use of locks with pthread_cond_t.
         pthread_cond_t  cmdready;
         pthread_cond_t  confreq;
-        pthread_t reader;
-        pthread_t configurer;
-        int have_reader;
-        int have_configurer;
+        epicsThreadId reader;
+        epicsThreadId configurer;
         bool conf_in_progress;
         Ipimb::ConfigV2 newconfig;
         int config_gen;
         int trigger_index;
         int trigger_user;
+    protected:
+        int   _physID;               // Physical ID
+        char *_name;
+        int   _fd;                   // File descriptor
+        epicsUInt32*  _trigger;      // PV with event number of trigger
+        epicsUInt32*  _gen;          // PV with generation number of trigger
+        char *_delay;                // PV with acquisition delay estimate
+        unsigned short _cmd[2][CRPackets];
+        unsigned short _data[2][DataPackets];
+        int cbuf, dbuf;
+        char *_syncpv;
+    };
+
+    class ipimbSyncObject : public SyncObject {
+    public:
+        ipimbSyncObject(IpimBoard *_ipimb);
+        ~ipimbSyncObject()                 {};
+        int Init(void);
+        DataObject *Acquire(void);
+        int CheckError(DataObject *dobj);
+        const char *Name(void)             { return ipimb->_name; }
+        int Attributes(void)               { return HasCount; }
+        int CountIncr(DataObject *dobj);
+        void QueueData(DataObject *dobj, epicsTimeStamp &evt_time);
+        void DebugPrint(DataObject *dobj);
+    private:
+        IpimBoard *ipimb;
+        uint64_t   lasttrig;         /* Count of the last successful Acquire. */
+        int        curincr;          /* Event increment between the last two successful Acquires. */
+        int        _physID;          /* Physical ID */
     };
 }
+
+#define DEBUG_CRC      1
+#define DEBUG_COMMAND  2
+#define DEBUG_READER   4
+#define DEBUG_REGISTER 8
+#define DEBUG_SYNC     16
+#define DEBUG_DATA     32
+#define DEBUG_TC       64
+#define DEBUG_TC_V     128
+#define DEBUG_CMD      256
+extern "C" int IPIMB_BRD_DEBUG;
+extern "C" int IPIMB_BRD_ID;
+#define DBG_ENABLED(flag)  ((IPIMB_BRD_ID == -1 || IPIMB_BRD_ID == _physID) && \
+                            (IPIMB_BRD_DEBUG & (flag)))
+
+unsigned CRC(unsigned short* lst, int length, int _physID);
+
 #endif

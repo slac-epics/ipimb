@@ -31,6 +31,7 @@ LIBSRCS += devIpimb.cpp
 LIBSRCS += devIpimbReg.c
 LIBSRCS += devIpimbGenSub.c
 LIBSRCS += IpimBoard.cc
+LIBSRCS += ipimbsync.cc
 LIBSRCS += ConfigV2.cc
 LIBSRCS += drvIpimbRegister.cpp
 
