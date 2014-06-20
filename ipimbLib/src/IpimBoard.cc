@@ -193,8 +193,8 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUIn
   
     memset(_cmd, 0, sizeof(_cmd));
     memset(_data, 0, sizeof(_data));
-    cbuf = 0;
-    dbuf = 0;
+    crd = cwr = 0;
+    drd = dwr = 0;
     have_data = 0;
 
     conf_in_progress = false;
@@ -254,7 +254,7 @@ int IpimBoard::WriteCommand(unsigned short* cList)
 void IpimBoard::SendCommandResponse(void)
 {
     pthread_mutex_lock(&mutex);
-    cbuf = cbuf ? 0 : 1;            /* Toggle to the other buffer. */
+    cwr++;
     pthread_cond_signal(&cmdready); /* Wake up whoever did the read! */
     if (DBG_ENABLED(DEBUG_READER|DEBUG_DATA)) {
         fprintf(stderr, "IPIMB %s: Got command response packet.\n", _name);
@@ -310,7 +310,9 @@ unsigned IpimBoard::ReadRegister(unsigned regAddr)
             do_write = 1;
             continue;
         }
-        IpimBoardResponse resp = IpimBoardResponse(_cmd[cbuf ? 0 : 1]);
+        if (cwr == crd)  /* Nothing to read! */
+            continue;
+        IpimBoardResponse resp = IpimBoardResponse(_cmd[crd++ & IPIMB_Q_MASK]);
         if (resp.getAddr() == regAddr) {
             unsigned result = resp.getData();
             if (DBG_ENABLED(DEBUG_REGISTER)) {
@@ -340,18 +342,17 @@ void IpimBoard::WriteRegister(unsigned regAddr, unsigned regValue)
 
 void IpimBoard::sendData(epicsTimeStamp &t)
 {
-    ts[dbuf] = t;
-    dbuf = dbuf ? 0 : 1;
+    ts[dwr++ & IPIMB_Q_MASK] = t;
     have_data = 1;
     scanIoRequest(*_ioscan);         /* Let'em know we have data! */
 }
 
 IpimBoardData *IpimBoard::getData(epicsTimeStamp *t)
 {
-    if (!have_data)
+    if (!have_data || drd == dwr)
         return NULL;
     else {
-        int which = dbuf ? 0 : 1;
+        int which = drd++ & IPIMB_Q_MASK;
         *t = ts[which];
         return new (_data[which]) IpimBoardData();
     }

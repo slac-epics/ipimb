@@ -18,6 +18,9 @@
 #include "ConfigV2.hh"
 #include "timesync.h"
 
+#define IPIMB_Q_SIZE 8
+#define IPIMB_Q_MASK 7
+
 #define BAUDRATE B115200
 /*
  * All data is transmitted in three byte chunks which contain two bytes of data:
@@ -259,7 +262,8 @@ namespace Pds {
         void SetTrigger(DBLINK *trig);
         void RestoreTrigger(void);
 
-        unsigned short *GetBuffer(int cmd) { return cmd ? _cmd[cbuf] : _data[dbuf]; }
+        unsigned short *GetBuffer(int cmd) { return cmd ? _cmd[cwr & IPIMB_Q_MASK]
+                                                        : _data[dwr & IPIMB_Q_MASK]; }
     
     private:
         char* _serialDevice;         // Name of serial port
@@ -269,7 +273,7 @@ namespace Pds {
         bool  config_ok;
         static bool  started;
         
-        epicsTimeStamp ts[2];
+        epicsTimeStamp ts[IPIMB_Q_SIZE];
         int have_data;
 
         static epicsMutexId trigger_mutex;
@@ -292,9 +296,10 @@ namespace Pds {
         epicsUInt32*  _trigger;      // PV with event number of trigger
         epicsUInt32*  _gen;          // PV with generation number of trigger
         char *_delay;                // PV with acquisition delay estimate
-        unsigned short _cmd[2][CRPackets];
-        unsigned short _data[2][DataPackets];
-        int cbuf, dbuf;
+        unsigned short _cmd[IPIMB_Q_SIZE][CRPackets];
+        unsigned short _data[IPIMB_Q_SIZE][DataPackets];
+        unsigned long long crd, cwr;
+        unsigned long long drd, dwr;
         char *_syncpv;
     };
 
