@@ -30,7 +30,16 @@ record(dfanout, "$(RECNAME):DONE_CNT_RESET")
 	field(OUTB, "$(RECNAME):DONE_CNT.B")
 	field(OUTC, "$(RECNAME):DONE_CNT.C")
 	field(OUTD, "$(RECNAME):DONE_CNT.D PP")
-	field(FLNK, "$(RECNAME):CURRENTFID")
+	field(FLNK, "$(RECNAME):DOREAD")
+}
+
+record(genSub, "$(RECNAME):DOREAD") {
+  field(DESC, "Advance to next data")
+  field(SCAN, "Passive")
+  field(SNAM, "ipimbDoReadProc")
+  field(INPA, "$(RECNAME):CH0_RAW.NAME")
+  field(FLNK, "$(RECNAME):CURRENTFID")
+  field(TSE,  "-2")
 }
 
 record(genSub, "$(RECNAME):CURRENTFID") {

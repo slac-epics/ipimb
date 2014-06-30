@@ -1,6 +1,7 @@
 ##include "base.dbd"
 function(ipimbConfigInit)
 function(ipimbConfigProc)
+function(ipimbDoReadProc)
 device(ai, INST_IO, devAiIPIMB, "IPIMB")
 device(bi, INST_IO, devBiIPIMB, "IPIMB")
 driver("drvIPIMB")

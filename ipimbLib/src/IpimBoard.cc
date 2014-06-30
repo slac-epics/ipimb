@@ -195,7 +195,6 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUIn
     memset(_data, 0, sizeof(_data));
     crd = cwr = 0;
     drd = dwr = 0;
-    have_data = 0;
 
     conf_in_progress = false;
     config_ok = false;
@@ -343,19 +342,24 @@ void IpimBoard::WriteRegister(unsigned regAddr, unsigned regValue)
 void IpimBoard::sendData(epicsTimeStamp &t)
 {
     ts[dwr++ & IPIMB_Q_MASK] = t;
-    have_data = 1;
     scanIoRequest(*_ioscan);         /* Let'em know we have data! */
 }
 
 IpimBoardData *IpimBoard::getData(epicsTimeStamp *t)
 {
-    if (!have_data || drd == dwr)
+    if (drd == dwr)
         return NULL;
     else {
-        int which = drd++ & IPIMB_Q_MASK;
+        int which = drd & IPIMB_Q_MASK;
         *t = ts[which];
         return new (_data[which]) IpimBoardData();
     }
+}
+
+void IpimBoard::nextData(void)
+{
+   if (drd != dwr)
+       drd++;
 }
 
 bool IpimBoard::configure(Ipimb::ConfigV2& config)

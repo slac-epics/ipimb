@@ -230,6 +230,7 @@ namespace Pds {
 
         void sendData(epicsTimeStamp &t);
         IpimBoardData *getData(epicsTimeStamp *t);
+        void nextData(void);
 
         bool configure(Ipimb::ConfigV2& config);
 
@@ -274,7 +275,6 @@ namespace Pds {
         static bool  started;
         
         epicsTimeStamp ts[IPIMB_Q_SIZE];
-        int have_data;
 
         static epicsMutexId trigger_mutex;
         static epicsMutexId start_mutex;

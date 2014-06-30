@@ -51,6 +51,7 @@ extern int ipimbConfigureByName (char * ipimbName, uint16_t chargeAmpRange,
                                  uint16_t calStrobeLength, uint32_t trigDelay,
                                  uint32_t trigPsDelay, uint32_t adcDelay,
                                  DBLINK *trig);
+extern void ipimbNextData(struct dbCommon *precord);
 
 long ipimbConfigInit(struct genSubRecord *psub)
 {
@@ -120,9 +121,24 @@ long ipimbConfigProc(struct genSubRecord *psub)
     return rtn;
 }
 
+long ipimbDoReadProc(struct genSubRecord *psub)
+{
+    if (!psub->dpvt) {
+        struct dbAddr addr;
+        if (dbNameToAddr((char *)psub->a, &addr))
+            return -1;
+        else
+            psub->dpvt = addr.precord;
+    }
+    struct dbCommon *precord = (struct dbCommon *)psub->dpvt;
+    ipimbNextData(precord);
+    return 0;
+}
+
 #if EPICS_VERSION>=3 && EPICS_REVISION>=14
 epicsRegisterFunction(ipimbConfigInit);
 epicsRegisterFunction(ipimbConfigProc);
+epicsRegisterFunction(ipimbDoReadProc);
 #endif
 
 #ifdef  __cplusplus

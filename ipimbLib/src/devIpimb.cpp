@@ -306,6 +306,12 @@ long read_bi(struct aiRecord *pbi)
     return 2; /* No convert */
 }
 
+void ipimbNextData(struct dbCommon *precord)
+{
+    IPIMB_DEVDATA *pdevdata = (IPIMB_DEVDATA *)(precord->dpvt);
+    pdevdata->pdevice->ipmBoard.nextData();
+}
+
 #ifdef  __cplusplus
 }
 #endif  /*      __cplusplus     */
