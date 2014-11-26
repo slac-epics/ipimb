@@ -214,7 +214,7 @@ IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUIn
     reader = epicsThreadMustCreate(_name, epicsThreadPriorityHigh + 5, 
                                    epicsThreadGetStackSize(epicsThreadStackMedium), 
                                    (EPICSTHREADFUNC)ipimb_thread_body, (void *)this);
-    configurer = epicsThreadMustCreate(_name, epicsThreadPriorityMedium, 
+    configurer = epicsThreadMustCreate(_name, epicsThreadPriorityHigh + 6, 
                                        epicsThreadGetStackSize(epicsThreadStackMedium), 
                                        (EPICSTHREADFUNC)ipimb_configure_body, (void *)this);
 }
