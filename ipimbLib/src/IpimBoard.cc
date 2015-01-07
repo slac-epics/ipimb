@@ -297,20 +297,28 @@ unsigned IpimBoard::ReadRegister(unsigned regAddr)
     int do_write = 1, i;
 
     pthread_mutex_lock(&mutex);
+    crd = cwr;    /* Flush anything that has been sent to us so far! */
     for (i = 0; i < 5; i++) {
         if (do_write && WriteCommand(cmd.getAll())) {
             pthread_mutex_unlock(&mutex);
             return BAD_VALUE;
         }
         gettimeofday(&tp, NULL);
-        ts.tv_sec  = tp.tv_sec + 5;                /* 5s timeout!!! */
-        ts.tv_nsec = tp.tv_usec * 1000 + 25000000; /* 25ms timeout */
+        ts.tv_sec  = tp.tv_sec + 1;                /* 1s timeout!!! */
+        ts.tv_nsec = tp.tv_usec * 1000;
         if (pthread_cond_timedwait(&cmdready, &mutex, &ts) == ETIMEDOUT) {
+            if (DBG_ENABLED(DEBUG_REGISTER)) {
+                printf("ReadRegister(%s) --> Timeout, retrying\n", REGNAME(regAddr));
+            }
             do_write = 1;
             continue;
         }
-        if (cwr == crd)  /* Nothing to read! */
+        if (cwr == crd) { /* Nothing to read! */
+            if (DBG_ENABLED(DEBUG_REGISTER)) {
+                printf("ReadRegister(%s) --> Woke up, no data?!?\n", REGNAME(regAddr));
+            }
             continue;
+        }
         IpimBoardResponse resp = IpimBoardResponse(_cmd[crd++ & IPIMB_Q_MASK]);
         if (resp.getAddr() == regAddr) {
             unsigned result = resp.getData();
@@ -321,6 +329,10 @@ unsigned IpimBoard::ReadRegister(unsigned regAddr)
             return result;
         } else {
             i--; /* Don't count this, it was a previous read! */
+            if (DBG_ENABLED(DEBUG_REGISTER)) {
+                printf("ReadRegister(%s) --> Ignoring previous read of %s!\n", 
+                       REGNAME(regAddr), REGNAME(resp.getAddr()));
+            }
             do_write = 0;
         }
     }
