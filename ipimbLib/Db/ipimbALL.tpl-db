@@ -33,20 +33,22 @@ record(dfanout, "$(RECNAME):DONE_CNT_RESET")
 	field(FLNK, "$(RECNAME):DOREAD")
 }
 
-record(genSub, "$(RECNAME):DOREAD") {
+record(aSub, "$(RECNAME):DOREAD") {
   field(DESC, "Advance to next data")
   field(SCAN, "Passive")
   field(SNAM, "ipimbDoReadProc")
   field(INPA, "$(RECNAME):CH0_RAW.NAME")
+  field(FTA,  "STRING")
   field(FLNK, "$(RECNAME):CURRENTFID")
   field(TSE,  "-2")
 }
 
-record(genSub, "$(RECNAME):CURRENTFID") {
+record(aSub, "$(RECNAME):CURRENTFID") {
   field(DESC, "Current Fiducial")
   field(SCAN, "Passive")
   field(SNAM, "evrTimeGetFiducial")
   field(INPA, "$(RECNAME):CH0_RAW.NAME")
+  field(FTA,  "STRING")
   field(FLNK, "$(RECNAME):SUM")
   field(TSE,  "-2")
 }
@@ -179,11 +181,11 @@ record(longout,"$(RECNAME):TrigDelay")
 }
 
 #
-# This genSub does the IPIMB configuration.  It also remembers the current
+# This aSub does the IPIMB configuration.  It also remembers the current
 # trigger if we are not currently remembering a trigger, and turns the trigger
 # off.
 #
-record(genSub, "$(RECNAME):Configure") {
+record(aSub, "$(RECNAME):Configure") {
   field(DESC, "Configure IPIMB")
   field(SCAN, "Passive")
   field(PINI, "NO")
