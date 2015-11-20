@@ -37,7 +37,7 @@
 #include <special.h>
 #include <cvtTable.h>
 #include <registryFunction.h>
-#include <genSubRecord.h>
+#include <aSubRecord.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -53,7 +53,7 @@ extern int ipimbConfigureByName (char * ipimbName, uint16_t chargeAmpRange,
                                  DBLINK *trig);
 extern void ipimbNextData(struct dbCommon *precord);
 
-long ipimbConfigInit(struct genSubRecord *psub)
+long ipimbConfigInit(struct aSubRecord *psub)
 {
 
     /* We don't do anything here because we concern any type, size and value change during fly */
@@ -65,7 +65,7 @@ long ipimbConfigInit(struct genSubRecord *psub)
     return 0;
 }
 
-long ipimbConfigProc(struct genSubRecord *psub)
+long ipimbConfigProc(struct aSubRecord *psub)
 {
     int rtn;
     /* We don't care link here, so we only care value, type and size */
@@ -121,7 +121,7 @@ long ipimbConfigProc(struct genSubRecord *psub)
     return rtn;
 }
 
-long ipimbDoReadProc(struct genSubRecord *psub)
+long ipimbDoReadProc(struct aSubRecord *psub)
 {
     if (!psub->dpvt) {
         struct dbAddr addr;
