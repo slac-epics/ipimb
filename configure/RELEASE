@@ -14,9 +14,9 @@ EPICS_BASE=$(EPICS_SITE_TOP)/base/$(BASE_MODULE_VERSION)
 # ===============================================================
 IOCADMIN_MODULE_VERSION=R3.0.0-2.0.1
 AUTOSAVE_MODULE_VERSION=R5.1-0.1.0
-EVENT2_MODULE_VERSION=R4.0.0-2.9.4
-BLDCLIENT_MODULE_VERSION=R2.10.5
-TIMESYNC_MODULE_VERSION=R1.1.7
+EVENT2_MODULE_VERSION=R4.0.0-4.2.2
+BLDCLIENT_MODULE_VERSION=R2.16.0
+TIMESYNC_MODULE_VERSION=R1.1.8
 
 # ============================================================
 # External Support module path definitions

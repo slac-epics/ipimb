@@ -87,7 +87,7 @@ void drvIPIMB_Register() {
 #endif  /* __cplusplus */
 /*
  * Register commands on application startup
- * In the funture we might change this to xxx = drvIPIMB_Register(); to guarantee link
+ * In the future we might change this to xxx = drvIPIMB_Register(); to guarantee link
  */
 class drvIPIMB_iocshReg {
     public:
