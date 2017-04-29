@@ -14,7 +14,7 @@
 # ===============================================================
 # Define the version(s) of any other needed modules 
 # ===============================================================
-AUTOSAVE_MODULE_VERSION		= R5.7.1-0.1.0
+AUTOSAVE_MODULE_VERSION		= R5.7.1-2.0.0
 IOCADMIN_MODULE_VERSION		= R3.1.15-1.0.1
 BLDCLIENT_MODULE_VERSION	= R2.17.0
 EVENT2_MODULE_VERSION		= R4.2.0
