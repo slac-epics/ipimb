@@ -1,1 +1,19 @@
-TODO: Add notes on each release
+#
+# RELEASE_NOTES
+#
+
+R3.1.1		2017-04-29	Bruce Hill
+	Moved to git and updated RELEASE files for git workflow
+	Updated module versions to latest
+
+R3.1.0		2016-10-17	Michael C. Browne
+	Add BSA support.
+	Fixup wonky indentation, but more importantly pass out final FLNK definition so we can hook up a BSA connection.
+	Fix aSub behaviors
+
+R3.0.17		2016-06-29	Michael C. Browne
+	Update to latest event2, fix configuration issue.
+
+R3.0.16		2015-11-20	Michael C. Browne
+	No genSub, aSub.
+
