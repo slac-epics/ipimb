@@ -262,7 +262,7 @@ void IpimBoard::SendCommandResponse(void)
 }
 
 #define REGNAME(n) (((n) > vhdl_version) ? "???" : regnames[n])
-static char *regnames[] = {
+static const char *regnames[] = {
     "timestamp0",
     "timestamp1",
     "serid0",

@@ -26,7 +26,8 @@ ipimbSyncObject::ipimbSyncObject(IpimBoard *_ipimb)
         pdelay = (double *) delayaddr.pfield;
     }
 
-    SetParams(ipimb->_trigger, ipimb->_gen, pdelay, ipimb->_syncpv);
+	epicsUInt32		timingMode	= 0; 	// 0=LCLS1, 1=LCLS2
+    SetParams( &timingMode, ipimb->_trigger, ipimb->_gen, pdelay, ipimb->_syncpv);
 }
 
 // Get some data and return it encapsulated.
