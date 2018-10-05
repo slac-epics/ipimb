@@ -12,7 +12,6 @@ include $(TOP)/configure/CONFIG
 # databases, templates, substitutions like this
 # DB += ipimb.db
 DB += ipimb.db
-DB += ipimb_iocAdmin.db
 
 #----------------------------------------------------
 # Create and install (or just install)
@@ -25,10 +24,6 @@ REQ += autosave_ipimb.req
 # Archive files, templates, substitutions like this
 # ARCHIVE += archive_ipimb.archive
 ARCHIVE += archive_ipimb.tpl-arch
-ARCHIVE += archive_ipimbIoc.archive
-
-# Nothing to build for autosave, just install from $AUTOSAVE/db
-DB_INSTALLS += $(AUTOSAVE)/db/save_restoreStatus.db
 
 include $(TOP)/configure/RULES
 #----------------------------------------

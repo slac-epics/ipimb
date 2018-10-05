@@ -14,11 +14,8 @@
 # ===============================================================
 # Define the version(s) of any other needed modules 
 # ===============================================================
-AUTOSAVE_MODULE_VERSION		= R5.7.1-2.0.0
-IOCADMIN_MODULE_VERSION		= R3.1.15-1.0.1
-BLDCLIENT_MODULE_VERSION	= R2.17.0
-EVENT2_MODULE_VERSION		= R4.2.0
-TIMESYNC_MODULE_VERSION		= R1.1.9
+EVENT2_MODULE_VERSION		= R4.4.0
+TIMESYNC_MODULE_VERSION		= R2.0.1
 
 # ============================================================
 # External Support module path definitions
@@ -33,10 +30,7 @@ TIMESYNC_MODULE_VERSION		= R1.1.9
 #
 # If your build fails, look for these paths in your build output
 # ============================================================
-IOCADMIN=$(EPICS_MODULES)/iocAdmin/$(IOCADMIN_MODULE_VERSION)
-AUTOSAVE=$(EPICS_MODULES)/autosave/$(AUTOSAVE_MODULE_VERSION)
 EVENT2=$(EPICS_MODULES)/event2/$(EVENT2_MODULE_VERSION)
-BLDCLIENT=$(EPICS_MODULES)/bldClient/$(BLDCLIENT_MODULE_VERSION)
 TIMESYNC=$(EPICS_MODULES)/timesync/$(TIMESYNC_MODULE_VERSION)
 
 # Set EPICS_BASE last so it appears last in the DB, DBD, INCLUDE, and LIB search paths
