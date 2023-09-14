@@ -9,10 +9,14 @@
 #$(RECNAME):CH1_RAW 0.1 monitor
 #$(RECNAME):CH2_RAW 0.1 monitor
 #$(RECNAME):CH3_RAW 0.1 monitor
-#$(RECNAME):CH0     0.1 monitor
-#$(RECNAME):CH1     0.1 monitor
-#$(RECNAME):CH2     0.1 monitor
-#$(RECNAME):CH3     0.1 monitor
+$(RECNAME):CH0     1 monitor
+$(RECNAME):CH1     1 monitor
+$(RECNAME):CH2     1 monitor
+$(RECNAME):CH3     1 monitor
+$(RECNAME):ChargeAmpRangeCH0    86400 monitor
+$(RECNAME):ChargeAmpRangeCH1    86400 monitor
+$(RECNAME):ChargeAmpRangeCH2    86400 monitor
+$(RECNAME):ChargeAmpRangeCH3    86400 monitor
 
 $(RECNAME):DiodeBias       	86400 monitor
 $(RECNAME):TrigDelay       	86400 monitor
