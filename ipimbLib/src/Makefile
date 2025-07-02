@@ -25,15 +25,15 @@ HTMLS_DIR	= .
 
 # Add any source files here
 # Note: No lib will be built if no sources are listed here
-LIBSRCS += bigselRecord.c
-LIBSRCS += drvIpimb.cpp
-LIBSRCS += devIpimb.cpp
-LIBSRCS += devIpimbReg.c
-LIBSRCS += devIpimbGenSub.c
-LIBSRCS += IpimBoard.cc
-LIBSRCS += ipimbsync.cc
-LIBSRCS += ConfigV2.cc
-LIBSRCS += drvIpimbRegister.cpp
+ipimb_SRCS += bigselRecord.c
+ipimb_SRCS += drvIpimb.cpp
+ipimb_SRCS += devIpimb.cpp
+ipimb_SRCS += devIpimbReg.c
+ipimb_SRCS += devIpimbGenSub.c
+ipimb_SRCS += IpimBoard.cc
+ipimb_SRCS += ipimbsync.cc
+ipimb_SRCS += ConfigV2.cc
+ipimb_SRCS += drvIpimbRegister.cpp
 
 #===========================
 
