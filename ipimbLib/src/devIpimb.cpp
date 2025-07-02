@@ -3,9 +3,7 @@
 
 #include <epicsVersion.h>
 
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
 #include <epicsExport.h>
-#endif
 
 #include <devLib.h>
 #include <dbAccess.h>
