@@ -3,9 +3,7 @@
 
 #include <epicsVersion.h>
 
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
 #include <epicsExport.h>
-#endif
 
 #include <devLib.h>
 #include <dbAccess.h>
@@ -60,9 +58,6 @@ struct BI_IPIMB_DEV_SUP_SET
     DEVSUPFUN       read_bi;
 } devBiIPIMB = {5, NULL, NULL, init_bi, NULL, read_bi};
 
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
 epicsExportAddress(dset, devAiIPIMB);
 epicsExportAddress(dset, devBiIPIMB);
-#endif
 
-                   

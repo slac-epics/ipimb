@@ -5,9 +5,7 @@
 
 #include <epicsVersion.h>
 
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
 #include <epicsExport.h>
-#endif
 #include <epicsTypes.h>
 #include <epicsEvent.h>
 #include <epicsMutex.h>
@@ -135,11 +133,9 @@ long ipimbDoReadProc(struct aSubRecord *psub)
     return 0;
 }
 
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
 epicsRegisterFunction(ipimbConfigInit);
 epicsRegisterFunction(ipimbConfigProc);
 epicsRegisterFunction(ipimbDoReadProc);
-#endif
 
 #ifdef  __cplusplus
 }
