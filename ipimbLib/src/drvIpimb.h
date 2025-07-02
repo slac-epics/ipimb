@@ -9,7 +9,7 @@
  */
 
 #include <epicsVersion.h>
-#if EPICS_VERSION>=3 && EPICS_REVISION>=14
+#if EPICS_VERSION >= 7 || (EPICS_VERSION>=3 && EPICS_REVISION>=14)
 
 #include <stdio.h>
 #include <string.h>
