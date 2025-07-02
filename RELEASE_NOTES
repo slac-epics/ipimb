@@ -1,6 +1,10 @@
 #
 # RELEASE_NOTES
 #
+R3.3.0      2025-07-02 Jeremy Lorelli
+    Fix build for EPICS 7
+    Update to event2/R6.0.3, timesync/R2.0.5
+
 R3.2.0		2018-10-04 Bruce Hill
 	Default to LCLS1 timing for call to timesync SetParams().
 	Remove unneeded module dependencies and update to event2/R4.4.0 and timesync/R2.0.1
