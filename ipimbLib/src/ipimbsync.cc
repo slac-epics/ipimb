@@ -1,5 +1,6 @@
 #include"IpimBoard.hh"
-#include"evrTime.h"
+
+#include "timingFifoApi.h"
 
 using namespace std;
 using namespace Pds;
@@ -59,7 +60,7 @@ DataObject *ipimbSyncObject::Acquire(void)
         }
         did_skip = 0;
         if (DBG_ENABLED(DEBUG_TC_V) && !COMMAND(rdbuf[0])) {
-            printf("IPIMB %s data read @ fid 0x%x\n", ipimb->_name, lastfid);
+            printf("IPIMB %s data read @ fid 0x%x\n", ipimb->_name, timingGetLastFiducial());
             fflush(stdout);
         }
 

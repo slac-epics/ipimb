@@ -22,3 +22,8 @@ TIMESYNC ?= Unspecified
 ifeq ($(wildcard $(TIMESYNC)/include),)
 $(error Invalid TIMESYNC: $(TIMESYNC))
 endif
+
+TIMINGAPI ?= Unspecified
+ifeq ($(wildcard $(TIMINGAPI)/include),)
+$(error Invalid TIMINGAPI: $(TIMINGAPI))
+endif
