@@ -1,6 +1,10 @@
 #
 # RELEASE_NOTES
 #
+R3.4.0      2025-09-24 Jeremy Lorelli
+    Replace lastfid usage with a timingApi function to make the module more generic
+    Now depends on timingApi/R0.9
+
 R3.3.0      2025-07-02 Jeremy Lorelli
     Fix build for EPICS 7
     Update to event2/R6.0.3, timesync/R2.0.5
