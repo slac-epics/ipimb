@@ -60,10 +60,22 @@ static const iocshArg *const ipimbAddArgs[9] = {&ipimbAddArg0, &ipimbAddArg1, &i
                                                 &ipimbAddArg9};
 static const iocshFuncDef ipimbAddDef = {"ipimbAdd", 9, ipimbAddArgs};
 static void ipimbAddCall(const iocshArgBuf * args) {
-    ipimbAdd( (char *)(args[0].sval), (char *)(args[1].sval), (char *)(args[2].sval),
-              (unsigned int) args[3].ival, (unsigned int) args[4].ival,
-              NULL, (char *)(args[6].sval), args[7].ival,
-              (char *)(args[8].sval), (char *)(args[9].sval));
+    int retcode = 0;
+    // null check all the string arguments
+    for (int idx=0; idx<ipimbAddDef.nargs; idx++) {
+      if ((ipimbAddArgs[idx]->type == iocshArgString) && !args[idx].sval) {
+        printf("%s string argument %s (%d) must be non-null!\n",
+               ipimbAddDef.name, ipimbAddArgs[idx]->name, idx);
+        retcode = 1;
+      }
+    }
+    if (retcode == 0) {
+      retcode = ipimbAdd( args[0].sval, args[1].sval, args[2].sval,
+                          (unsigned int) args[3].ival, (unsigned int) args[4].ival,
+                          NULL, args[6].sval, args[7].ival,
+                          args[8].sval, args[9].sval);
+    }
+    iocshSetError(retcode);
 }
 
 static const iocshArg *const ipimbTprAddArgs[10] = {&ipimbAddArg0, &ipimbAddArg1, &ipimbAddArg2, &ipimbAddArg3,
@@ -71,10 +83,22 @@ static const iocshArg *const ipimbTprAddArgs[10] = {&ipimbAddArg0, &ipimbAddArg1
                                                     &ipimbAddArg8, &ipimbAddArg9};
 static const iocshFuncDef ipimbTprAddDef = {"ipimbTprAdd", 10, ipimbTprAddArgs};
 static void ipimbTprAddCall(const iocshArgBuf * args) {
-    ipimbAdd( (char *)(args[0].sval), (char *)(args[1].sval), (char *)(args[2].sval),
-              (unsigned int) args[3].ival, (unsigned int) args[4].ival,
-              (char *)(args[5].sval), (char *)(args[6].sval), args[7].ival,
-              (char *)(args[8].sval), (char *)(args[9].sval));
+    int retcode = 0;
+    // null check all the string arguments
+    for (int idx=0; idx<ipimbTprAddDef.nargs; idx++) {
+      if ((ipimbTprAddArgs[idx]->type == iocshArgString) && !args[idx].sval) {
+        printf("%s string argument %s (%d) must be non-null!\n",
+               ipimbTprAddDef.name, ipimbTprAddArgs[idx]->name, idx);
+        retcode = 1;
+      }
+    }
+    if (retcode == 0) {
+      retcode = ipimbAdd( args[0].sval, args[1].sval, args[2].sval,
+                          (unsigned int) args[3].ival, (unsigned int) args[4].ival,
+                          args[5].sval, args[6].sval, args[7].ival,
+                          args[8].sval, args[9].sval);
+    }
+    iocshSetError(retcode);
 }
 
 static const iocshFuncDef ipimbStartDef = {"ipimbStart", 0, NULL};

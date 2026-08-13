@@ -155,8 +155,8 @@ static void *ipimb_configure_body(void *p)
     return NULL;
 }
 
-IpimBoard::IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUInt32* trigger,
-                     epicsUInt32 *gen, int polarity, char *delay, char *name, char *sync)
+IpimBoard::IpimBoard(const char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUInt32* trigger,
+                     epicsUInt32 *gen, int polarity, const char *delay, const char *name, const char *sync)
 {
     struct termios newtio;
 

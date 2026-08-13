@@ -49,7 +49,7 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange,
 }
 
 /* This function is used to check if the ipimb box name already in our list */
-IPIMB_DEVICE * ipimbFindDeviceByName(char * name)
+IPIMB_DEVICE * ipimbFindDeviceByName(const char * name)
 {
     IPIMB_DEVICE  * pdevice = NULL;
 
@@ -66,7 +66,7 @@ IPIMB_DEVICE * ipimbFindDeviceByName(char * name)
 }
 
 /* This function is used to check if the ttyName already in our list */
-IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName)
+IPIMB_DEVICE * ipimbFindDeviceByTtyName(const char * ttyName)
 {
     IPIMB_DEVICE  * pdevice = NULL;
 
@@ -113,8 +113,8 @@ static int ipimbSetPv(int iPvIndex, void* pPvValue, void* payload)
     return 0;
 }
 
-int  ipimbAdd(char *name, char *ttyName, char *mdestIP, unsigned int physID, unsigned int dtype,
-              char* gen, char *trigger, int polarity, char *delay, char *sync)
+int  ipimbAdd(const char *name, const char *ttyName, const char *mdestIP, unsigned int physID, unsigned int dtype,
+              const char* gen, const char *trigger, int polarity, const char *delay, const char *sync)
 {
     IPIMB_DEVICE  * pdevice = NULL;
     DBADDR trigaddr;
@@ -226,7 +226,7 @@ static long IPIMB_EPICS_Report(int level)
 {
     IPIMB_DEVICE * pdevice;
 
-    printf("\n"IPIMB_DRV_VERSION"\n\n");
+    printf("\n" IPIMB_DRV_VERSION "\n\n");
 
     if(!IPIMB_device_list_inited)
     {

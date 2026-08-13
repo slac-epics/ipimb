@@ -91,8 +91,8 @@ public:
     IpimBoardData    ipmData;
 
 public:
-    IPIMB_DEVICE(char * ipmName, char *ipmTtyName, char * ipmMdestIP, int physID, 
-                 epicsUInt32 *trigger, epicsUInt32 *gen, int polarity, char *delay, char *sync)
+    IPIMB_DEVICE(const char * ipmName, const char *ipmTtyName, const char * ipmMdestIP, int physID,
+                 epicsUInt32 *trigger, epicsUInt32 *gen, int polarity, const char *delay, const char *sync)
         : ipmBoard(ipmTtyName, &ioscan, physID, trigger, gen, polarity, delay, ipmName, sync), ipmData()
     {
         name = epicsStrDup(ipmName);
@@ -128,11 +128,11 @@ int ipimbConfigureByName(char * ipimbName, uint16_t chargeAmpRange,
                          uint16_t calStrobeLength, uint32_t trigDelay, 
                          uint32_t trigPsDelay, uint32_t adcDelay,
                          DBLINK *trig);
-IPIMB_DEVICE * ipimbFindDeviceByName(char * name);
-IPIMB_DEVICE * ipimbFindDeviceByTtyName(char * ttyName);
-int		ipimbAdd(char * name, char * ttyName, char * mdestIP, unsigned int physID,
-               unsigned int dtype, char *gen, char *trigger, int polarity,
-               char *delay, char *sync );
+IPIMB_DEVICE * ipimbFindDeviceByName(const char * name);
+IPIMB_DEVICE * ipimbFindDeviceByTtyName(const char * ttyName);
+int		ipimbAdd(const char * name, const char * ttyName, const char * mdestIP, unsigned int physID,
+               unsigned int dtype, const char *gen, const char *trigger, int polarity,
+               const char *delay, const char *sync );
 
 void ipimbStart(void);
 #ifdef	__cplusplus

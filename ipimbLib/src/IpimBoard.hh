@@ -217,8 +217,8 @@ namespace Pds {
             vhdl_version        = 0x17
         };
 
-        IpimBoard(char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUInt32 *trigger,
-                  epicsUInt32 *gen, int polarity, char *delay, char *name, char *sync);
+        IpimBoard(const char* serialDevice, IOSCANPVT *ioscan, int physID, epicsUInt32 *trigger,
+                  epicsUInt32 *gen, int polarity, const char *delay, const char *name, const char *sync);
         ~IpimBoard();
 
         void do_configure(void);  // The configure thread body!
